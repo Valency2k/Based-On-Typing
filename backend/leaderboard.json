@@ -1,0 +1,58 @@
+[
+  {
+    "playerAddress": "0x7CE8Ca965369696f2bf55068D05A3Cfaa3D9D588",
+    "mode": 1,
+    "wordsTyped": 21,
+    "correctWords": 20,
+    "mistakes": 1,
+    "accuracy": 9523,
+    "accuracyPercent": 95.23,
+    "wpm": 51,
+    "score": 476.7535384615384,
+    "durationSeconds": 52,
+    "timestamp": 1764087457,
+    "textLength": 122
+  },
+  {
+    "playerAddress": "0x7CE8Ca965369696f2bf55068D05A3Cfaa3D9D588",
+    "mode": 4,
+    "wordsTyped": 18,
+    "correctWords": 18,
+    "mistakes": 0,
+    "accuracy": 10000,
+    "accuracyPercent": 100,
+    "wpm": 47,
+    "score": 480.6370370370371,
+    "durationSeconds": 54,
+    "timestamp": 1764090401,
+    "textLength": 117
+  },
+  {
+    "playerAddress": "0x7CE8Ca965369696f2bf55068D05A3Cfaa3D9D588",
+    "mode": 0,
+    "wordsTyped": 21,
+    "correctWords": 20,
+    "mistakes": 1,
+    "accuracy": 9523,
+    "accuracyPercent": 95.23,
+    "wpm": 47,
+    "score": 478.292,
+    "durationSeconds": 50,
+    "timestamp": 1764087255,
+    "textLength": 117
+  },
+  {
+    "playerAddress": "0x7CE8Ca965369696f2bf55068D05A3Cfaa3D9D588",
+    "mode": 2,
+    "wordsTyped": 65,
+    "correctWords": 62,
+    "mistakes": 3,
+    "accuracy": 9538,
+    "accuracyPercent": 95.38,
+    "wpm": 42,
+    "score": 454.07737313432835,
+    "durationSeconds": 134,
+    "timestamp": 1764089503,
+    "textLength": 376
+  }
+]

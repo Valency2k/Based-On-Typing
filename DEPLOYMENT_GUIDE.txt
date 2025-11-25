@@ -1,0 +1,149 @@
+========================================
+🚀 DEPLOYMENT GUIDE - Based on Typing
+========================================
+
+This guide will help you deploy your smart contract to Base network.
+
+========================================
+OPTION 1: Deploy to Base Sepolia (TESTNET - RECOMMENDED FOR TESTING)
+========================================
+
+📍 Step 1: Get Test ETH
+------------------------
+1. Go to Base Sepolia Faucet: https://www.coinbase.com/faucets/base-ethereum-goerli-faucet
+2. Enter your wallet address
+3. Request testnet ETH (it's free!)
+4. Wait for the testnet ETH to arrive in your wallet
+
+📍 Step 2: Setup Environment Variables
+---------------------------------------
+1. Copy .env.example to .env:
+   - Right-click .env.example → Copy
+   - Paste in the same folder → Rename to .env
+
+2. Open .env file and add your private key:
+   - Open MetaMask
+   - Click the 3 dots → Account Details → Export Private Key
+   - Enter your password → Copy the key
+   - Paste it in .env (remove "0x" prefix if present)
+   
+   Example:
+   PRIVATE_KEY=abc123def456... (your actual key)
+
+📍 Step 3: Update ETH Price (IMPORTANT!)
+-----------------------------------------
+1. Check current ETH price: https://www.coingecko.com/en/coins/ethereum
+   
+2. Open: scripts/deploy.js
+
+3. Find line 9:
+   const INITIAL_ETH_PRICE_IN_CENTS = 300000;
+   
+4. Update with current price in cents:
+   - If ETH = $2,500.00 → set 250000
+   - If ETH = $3,000.00 → set 300000
+   - If ETH = $3,500.00 → set 350000
+
+📍 Step 4: Compile the Contract
+--------------------------------
+Run in terminal:
+
+npm run compile
+
+Wait for "Compiled successfully!" message.
+
+📍 Step 5: Deploy to Base Sepolia Testnet
+------------------------------------------
+Run in terminal:
+
+npx hardhat run scripts/deploy.js --network baseSepolia
+
+📍 Step 6: Copy Contract Address
+---------------------------------
+The deployment script will show:
+
+✅ BasedOnTyping deployed to: 0xABC123...
+
+COPY THIS ADDRESS! You'll need it in the next step.
+
+📍 Step 7: Update Frontend Configuration
+-----------------------------------------
+1. Open: web3Integration.js
+
+2. Find line 18:
+   contractAddress: '0x0000000000000000000000000000000000000000',
+
+3. Replace with your deployed address:
+   contractAddress: '0xABC123...', (your actual address from step 6)
+
+4. Find line 60:
+   activeNetwork: 'testnet'
+   
+   Make sure it says 'testnet' for Base Sepolia
+
+5. Save the file
+
+📍 Step 8: Test Your Game!
+---------------------------
+1. Refresh your browser (F5 or Ctrl+R)
+
+2. Make sure MetaMask is connected to "Base Sepolia" network
+
+3. Click "Connect Wallet"
+
+4. Try playing a game mode - it should ask for payment!
+
+5. Approve the transaction in MetaMask
+
+6. Start typing! 🎮
+
+========================================
+OPTION 2: Deploy to Base Mainnet (PRODUCTION - REAL MONEY)
+========================================
+
+⚠️ WARNING: This uses REAL ETH and costs real money!
+
+Follow the same steps as Option 1, but:
+
+1. Make sure you have REAL ETH in your wallet (not test ETH)
+   - You need ~0.001-0.002 ETH for deployment gas fees
+
+2. In Step 5, use this command instead:
+   npx hardhat run scripts/deploy.js --network base
+
+3. In Step 7, change activeNetwork to 'mainnet':
+   activeNetwork: 'mainnet'
+
+4. Make sure MetaMask is on "Base" network (not Base Sepolia)
+
+========================================
+📝 AFTER DEPLOYMENT CHECKLIST
+========================================
+
+✅ Contract deployed successfully
+✅ Contract address copied
+✅ web3Integration.js updated with contract address
+✅ activeNetwork set correctly (testnet or mainnet)
+✅ Browser refreshed
+✅ MetaMask on correct network
+✅ Wallet connected
+✅ Game is playable with blockchain payments
+
+========================================
+🔧 TROUBLESHOOTING
+========================================
+
+❌ "Insufficient funds" error
+→ You need more ETH in your wallet for gas fees
+
+❌ "Invalid private key" error
+→ Check your .env file - make sure private key has no spaces or "0x" prefix
+
+❌ "Network not supported" error
+→ Make sure MetaMask is on Base Sepolia (testnet) or Base (mainnet)
+
+❌ "Contract not found" error
+→ Double-check the contract address in web3Integration.js
+
+❌ Game fee shows as "Error"
+→ Contract address
