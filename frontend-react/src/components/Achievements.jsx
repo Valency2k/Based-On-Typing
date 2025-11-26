@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
 import achievementABI from '../achievementABI.json';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '';
 // TODO: Move to env
 const ACHIEVEMENT_CONTRACT_ADDRESS = import.meta.env.VITE_ACHIEVEMENT_CONTRACT_ADDRESS;
 
