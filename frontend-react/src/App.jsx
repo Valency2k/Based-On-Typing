@@ -303,7 +303,8 @@ const GamePage = () => {
         console.log("Submitting score for Session:", sessionId.toString());
         // 1. Get signature from backend
         // 1. Get signature from backend
-        const signResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/game/sign`, {
+        const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:3001/api');
+        const signResponse = await fetch(`${apiBase}/game/sign`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

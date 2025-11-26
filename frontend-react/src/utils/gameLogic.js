@@ -214,6 +214,7 @@ export class WordGenerator {
     }
 
     _hashString(str) {
+        if (!str) return 0;
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             const char = str.charCodeAt(i);
@@ -414,6 +415,7 @@ export class GameSession {
     }
 
     _hashString(str) {
+        if (!str) return 0;
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
             const char = str.charCodeAt(i);

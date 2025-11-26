@@ -37,9 +37,14 @@ export default function DailyChallengePage() {
                     setLoading(false);
                 } else {
                     const data = await api.fetchDailyChallenge();
-                    setChallengeData(data);
-                    localStorage.setItem('dailyChallengeData', JSON.stringify(data));
-                    localStorage.setItem('dailyChallengeDate', today);
+                    if (data && (data.error || data.success === false)) {
+                        console.error("Daily Challenge API Error:", data.error);
+                        setChallengeData(null); // Keep null to show error state
+                    } else {
+                        setChallengeData(data);
+                        localStorage.setItem('dailyChallengeData', JSON.stringify(data));
+                        localStorage.setItem('dailyChallengeDate', today);
+                    }
                     setLoading(false);
                 }
             } catch (err) {

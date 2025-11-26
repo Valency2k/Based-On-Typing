@@ -1,4 +1,11 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api';
+// In production (Vercel), we want relative paths starting with /api
+// In local dev, we might want localhost.
+// If VITE_API_URL is set, use it.
+// If not set, and we are in PROD, use '/api'.
+// If not set, and we are in DEV, use 'http://127.0.0.1:3001/api'.
+
+const isProd = import.meta.env.PROD;
+const API_URL = import.meta.env.VITE_API_URL || (isProd ? '/api' : 'http://127.0.0.1:3001/api');
 
 export const api = {
     async fetchDailyChallenge() {

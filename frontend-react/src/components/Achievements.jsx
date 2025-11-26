@@ -6,7 +6,8 @@ import { api } from '../services/api';
 import { useWallet } from '../context/WalletContext';
 import achievementABI from '../achievementABI.json';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const isProd = import.meta.env.PROD;
+const API_URL = import.meta.env.VITE_API_URL || (isProd ? '/api' : 'http://127.0.0.1:3001/api');
 // TODO: Move to env
 const ACHIEVEMENT_CONTRACT_ADDRESS = import.meta.env.VITE_ACHIEVEMENT_CONTRACT_ADDRESS || '0x3BF06869Dae75c7742054096339E81dAAaacDA99';
 
