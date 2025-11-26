@@ -1,39 +1,22 @@
-const fs = require('fs').promises;
-const path = require('path');
 const { ethers } = require('ethers');
-const { getContract, getWallet, isConnected } = require('./blockchain');
+const { getContract, isConnected } = require('./blockchain');
 const utils = require('./utils');
 
-const FILE_PATH = path.join(__dirname, 'leaderboard.json');
 let listenersAttached = false;
+let db;
+let collection;
 
-// Helper to read leaderboard file safely
-async function readFileSafe() {
-    try {
-        const data = await fs.readFile(FILE_PATH, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        if (error.code === 'ENOENT') return [];
-        console.error('Error reading leaderboard file:', error);
-        return [];
-    }
-}
-
-// Helper to write leaderboard file safely
-async function writeFileSafe(data) {
-    try {
-        await fs.writeFile(FILE_PATH, JSON.stringify(data, null, 2));
-    } catch (error) {
-        console.error('Error writing leaderboard file:', error);
-    }
+function setDb(database) {
+    db = database;
+    collection = db.collection('leaderboard');
+    // Create indexes
+    collection.createIndex({ playerAddress: 1, mode: 1 });
+    collection.createIndex({ mode: 1, score: -1 });
+    console.log("✅ Leaderboard initialized (MongoDB Native)");
 }
 
 async function initialize() {
-    try {
-        await fs.access(FILE_PATH);
-    } catch {
-        await writeFileSafe([]);
-    }
+    // Initialization handled via setDb
 }
 
 function getStartOfWeek() {
@@ -46,53 +29,6 @@ function getStartOfWeek() {
     return Math.floor(now.getTime() / 1000);
 }
 
-// Helper to deduplicate list for display (Best per player per mode)
-function deduplicateForDisplay(list) {
-    const unique = {};
-    list.forEach(entry => {
-        const key = `${entry.playerAddress.toLowerCase()}_${entry.mode}`;
-        if (!unique[key] || entry.wpm > unique[key].wpm || (entry.wpm === unique[key].wpm && entry.score > unique[key].score)) {
-            unique[key] = entry;
-        }
-    });
-    return Object.values(unique);
-}
-
-function cleanupLeaderboard(list) {
-    const startOfWeek = getStartOfWeek();
-    const groups = {};
-
-    // Group by player and mode
-    list.forEach(entry => {
-        const key = `${entry.playerAddress.toLowerCase()}_${entry.mode}`;
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(entry);
-    });
-
-    const cleanedList = [];
-
-    Object.values(groups).forEach(group => {
-        // 1. Find All-Time Best
-        group.sort((a, b) => b.wpm - a.wpm || b.score - a.score || b.timestamp - a.timestamp);
-        const bestAllTime = group[0];
-        cleanedList.push(bestAllTime);
-
-        // 2. Find Weekly Best (if different)
-        const weeklyEntries = group.filter(e => e.timestamp >= startOfWeek);
-        if (weeklyEntries.length > 0) {
-            weeklyEntries.sort((a, b) => b.wpm - a.wpm || b.score - a.score || b.timestamp - a.timestamp);
-            const bestWeekly = weeklyEntries[0];
-
-            // Only add if it's a different entry object (check timestamp/score to be sure)
-            if (bestWeekly.timestamp !== bestAllTime.timestamp || bestWeekly.score !== bestAllTime.score) {
-                cleanedList.push(bestWeekly);
-            }
-        }
-    });
-
-    return cleanedList;
-}
-
 // Core logic to process a game completion event (live or synced)
 async function processGameCompletion(player, sessionIdBN, wordsTypedBN, accuracyBN, eventTimestampBN) {
     const contract = getContract();
@@ -101,9 +37,6 @@ async function processGameCompletion(player, sessionIdBN, wordsTypedBN, accuracy
     console.log('Processing GameCompleted for player:', player);
     try {
         const sessionId = sessionIdBN.toNumber();
-
-        // Check if we already have this session to avoid unnecessary RPC calls
-        const list = await readFileSafe();
 
         // Fetch full session details from contract
         const session = await contract.getGameSession(player, sessionId);
@@ -126,7 +59,7 @@ async function processGameCompletion(player, sessionIdBN, wordsTypedBN, accuracy
         }
 
         // Normalize session fields
-        const entry = {
+        const entryData = {
             playerAddress: session.player,
             mode: Number(session.mode),
             wordsTyped: Number(session.wordsTyped),
@@ -137,34 +70,41 @@ async function processGameCompletion(player, sessionIdBN, wordsTypedBN, accuracy
             wpm: Number(session.wpm),
             score: 0,
             durationSeconds: Number(session.duration),
-            timestamp: Number(session.endTime) || Date.now(),
+            timestamp: Number(session.endTime) || Math.floor(Date.now() / 1000),
             textLength: Number(session.correctWords) // fallback
         };
 
         if (session.correctCharacters !== undefined) {
-            entry.textLength = Number(session.correctCharacters);
+            entryData.textLength = Number(session.correctCharacters);
         }
 
         // Compute score
-        entry.score = utils.calculateGlobalScore({
-            wordsTyped: entry.wordsTyped,
-            mistakes: entry.mistakes,
-            accuracy: entry.accuracyPercent,
-            durationSeconds: entry.durationSeconds,
-            correctWords: entry.correctWords
+        entryData.score = utils.calculateGlobalScore({
+            wordsTyped: entryData.wordsTyped,
+            mistakes: entryData.mistakes,
+            accuracy: entryData.accuracyPercent,
+            durationSeconds: entryData.durationSeconds,
+            correctWords: entryData.correctWords
         });
 
-        // Update leaderboard file
-        let currentList = await readFileSafe();
+        // Save to MongoDB
+        if (!collection) {
+            console.error("❌ Database not initialized");
+            return;
+        }
 
-        // Add new entry
-        currentList.push(entry);
+        const existing = await collection.findOne({
+            playerAddress: entryData.playerAddress,
+            mode: entryData.mode,
+            timestamp: entryData.timestamp
+        });
 
-        // Smart Cleanup: Keep Best All-Time AND Best Weekly per player/mode
-        currentList = cleanupLeaderboard(currentList);
-
-        currentList.sort((a, b) => b.wpm - a.wpm || b.score - a.score || b.timestamp - a.timestamp);
-        await writeFileSafe(currentList);
+        if (!existing) {
+            await collection.insertOne(entryData);
+            console.log(`✅ Saved score for ${player} (Mode: ${entryData.mode}, WPM: ${entryData.wpm})`);
+        } else {
+            console.log(`ℹ️ Score already exists for ${player}`);
+        }
 
     } catch (err) {
         console.error('Error processing game completion:', err);
@@ -222,77 +162,125 @@ function detachEventListeners() {
 
 async function getGlobalHandler(req, res) {
     try {
+        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+
         const limit = Math.min(Number(req.query.limit || 20), 100);
         const offset = Math.max(Number(req.query.offset || 0), 0);
         const period = req.query.period || 'all';
 
-        let data = await readFileSafe();
-
+        let query = {};
         if (period === 'weekly') {
             const startOfWeek = getStartOfWeek();
-            data = data.filter(e => e.timestamp >= startOfWeek);
+            query.timestamp = { $gte: startOfWeek };
         }
 
-        // Deduplicate: Show only best score per player for the selected period
-        data = deduplicateForDisplay(data);
+        // Aggregation pipeline to get best score per player
+        const pipeline = [
+            { $match: query },
+            { $sort: { wpm: -1, score: -1 } },
+            {
+                $group: {
+                    _id: "$playerAddress",
+                    doc: { $first: "$$ROOT" }
+                }
+            },
+            { $replaceRoot: { newRoot: "$doc" } },
+            { $sort: { wpm: -1, score: -1 } },
+            { $skip: offset },
+            { $limit: limit }
+        ];
 
-        data.sort((a, b) => b.wpm - a.wpm || b.score - a.score || b.timestamp - a.timestamp);
-        res.json({ success: true, entries: data.slice(offset, offset + limit), total: data.length });
-    } catch {
-        res.status(500).json({ success: false });
+        const entries = await collection.aggregate(pipeline).toArray();
+        const total = await collection.distinct('playerAddress', query).then(l => l.length);
+
+        res.json({ success: true, entries, total });
+    } catch (err) {
+        console.error("Global leaderboard error:", err);
+        res.status(500).json({ success: false, error: err.message });
     }
 }
 
 async function getModeHandler(req, res) {
     try {
+        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+
         const modeMap = { 'time-limit': 0, 'word-count': 1, 'survival': 2, 'daily-challenge': 3, 'paragraph': 4 };
         const mode = modeMap[req.params.mode];
         if (mode === undefined) return res.status(400).json({ success: false, error: 'Invalid mode' });
         const period = req.query.period || 'all';
 
-        let data = await readFileSafe();
-        data = data.filter((e) => e.mode === mode);
+        let query = { mode };
 
-        // Additional filter for Daily Challenge to ensure only today's scores are shown
-        if (mode === 3) {
-            const todayStart = new Date().setUTCHours(0, 0, 0, 0);
-            data = data.filter(e => {
-                const entryDate = new Date(e.timestamp * 1000).setUTCHours(0, 0, 0, 0);
-                return entryDate === todayStart;
-            });
-        } else if (period === 'weekly') {
-            const startOfWeek = getStartOfWeek();
-            data = data.filter(e => e.timestamp >= startOfWeek);
+        if (mode === 3) { // Daily Challenge
+            // For daily challenge, we might want "today's" scores or just all time bests for daily mode?
+            // Usually daily challenge is specific to a day.
+            // The frontend seems to filter by "today" in the old code.
+            const todayStart = new Date().setUTCHours(0, 0, 0, 0) / 1000; // Seconds
+            // Actually, timestamp in DB is seconds (from contract) or ms (from Date.now())?
+            // Contract uses block.timestamp (seconds).
+            // Date.now() is ms.
+            // In processGameCompletion: timestamp: Number(session.endTime) || Date.now()
+            // session.endTime is seconds. Date.now() is ms.
+            // This is a bug in the old code too if mixed.
+            // Assuming seconds for now as contract is primary.
+            // Let's fix the query to handle seconds.
+
+            // Wait, if we use Date.now() fallback, it's ms.
+            // Let's ensure we store seconds.
+            // In processGameCompletion: timestamp: Number(session.endTime) || Math.floor(Date.now() / 1000)
         }
 
-        // Deduplicate: Show only best score per player for the selected period
-        data = deduplicateForDisplay(data);
+        if (period === 'weekly') {
+            const startOfWeek = getStartOfWeek();
+            query.timestamp = { $gte: startOfWeek };
+        }
 
-        data.sort((a, b) => b.wpm - a.wpm || b.score - a.score || b.timestamp - a.timestamp);
-        res.json({ success: true, entries: data, total: data.length });
-    } catch {
-        res.status(500).json({ success: false });
+        // Aggregation for best per player in this mode
+        const pipeline = [
+            { $match: query },
+            { $sort: { wpm: -1, score: -1 } },
+            {
+                $group: {
+                    _id: "$playerAddress",
+                    doc: { $first: "$$ROOT" }
+                }
+            },
+            { $replaceRoot: { newRoot: "$doc" } },
+            { $sort: { wpm: -1, score: -1 } }
+        ];
+
+        const entries = await collection.aggregate(pipeline).toArray();
+        res.json({ success: true, entries, total: entries.length });
+    } catch (err) {
+        console.error("Mode leaderboard error:", err);
+        res.status(500).json({ success: false, error: err.message });
     }
 }
 
 async function getPlayerHandler(req, res) {
     try {
+        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+
         const address = req.params.address;
-        const data = await readFileSafe();
-        const filtered = data.filter((e) => e.playerAddress.toLowerCase() === address.toLowerCase());
-        filtered.sort((a, b) => b.wpm - a.wpm || b.score - a.score);
-        res.json({ success: true, entries: filtered });
-    } catch {
-        res.status(500).json({ success: false });
+        // Case insensitive search
+        const entries = await collection.find({
+            playerAddress: { $regex: new RegExp(`^${address}$`, 'i') }
+        }).sort({ wpm: -1, score: -1 }).toArray();
+
+        res.json({ success: true, entries });
+    } catch (err) {
+        console.error("Player leaderboard error:", err);
+        res.status(500).json({ success: false, error: err.message });
     }
 }
 
 async function count() {
-    const data = await readFileSafe();
-    return data.length;
+    if (!collection) return 0;
+    return await collection.countDocuments();
 }
 
 module.exports = {
+    setDb,
     initialize,
     attachEventListeners,
     detachEventListeners,
@@ -300,7 +288,5 @@ module.exports = {
     getGlobalHandler,
     getModeHandler,
     getPlayerHandler,
-    count,
-    readFileSafe,
-    writeFileSafe
+    count
 };

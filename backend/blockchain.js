@@ -65,23 +65,25 @@ async function initBlockchain() {
         internalEmitter.emit("disconnected");
     });
 
-    // periodic RPC check
-    setInterval(async () => {
-        try {
-            await provider.getBlockNumber();
-            if (!connected) {
-                connected = true;
-                console.log("🌐 RPC provider reconnected");
-                internalEmitter.emit("connected");
+    // periodic RPC check (Only run if NOT on Vercel)
+    if (!process.env.VERCEL) {
+        setInterval(async () => {
+            try {
+                await provider.getBlockNumber();
+                if (!connected) {
+                    connected = true;
+                    console.log("🌐 RPC provider reconnected");
+                    internalEmitter.emit("connected");
+                }
+            } catch (err) {
+                if (connected) {
+                    connected = false;
+                    console.error("❌ RPC provider disconnected:", err.message);
+                    internalEmitter.emit("disconnected");
+                }
             }
-        } catch (err) {
-            if (connected) {
-                connected = false;
-                console.error("❌ RPC provider disconnected:", err.message);
-                internalEmitter.emit("disconnected");
-            }
-        }
-    }, 15000);
+        }, 15000);
+    }
 
     return { provider, contract, wallet };
 }

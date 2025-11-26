@@ -9,6 +9,7 @@ const path = require('path');
 const PORT = process.env.PORT || 3001;
 
 // Modular imports
+const { MongoClient } = require('mongodb');
 const {
     initBlockchain,
     getStatus,
@@ -17,11 +18,27 @@ const {
     signGameResult
 } = require('./blockchain');
 
-
 const leaderboard = require('./leaderboard');
 const paragraph = require('./paragraph');
 const dailyChallenge = require('./dailyChallenge');
 const achievements = require('./achievements');
+
+// MongoDB Connection
+const client = new MongoClient(process.env.MONGODB_URI);
+let db;
+
+async function connectDB() {
+    try {
+        await client.connect();
+        db = client.db("basedontyping"); // Explicitly select DB if needed, or rely on URI
+        console.log('✅ MongoDB Connected (Native Driver)');
+        // Share db instance with modules
+        leaderboard.setDb(db);
+    } catch (err) {
+        console.error('❌ MongoDB Connection Error:', err);
+    }
+}
+connectDB();
 
 const app = express();
 app.use(cors({
@@ -137,59 +154,40 @@ app.post('/api/game/sign', async (req, res) => {
         const signature = await signGameResult(player, sessionId, wordsTyped, correctWords, mistakes, correctCharacters, wpm);
         res.json({ success: true, signature });
     } catch (err) {
-        console.error('Signing failed:', err);
+        console.error('Game signing failed:', err.message);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// Start server
-async function start() {
+let isInitialized = false;
+async function ensureInitialized() {
+    if (isInitialized) return;
     try {
-        const bc = await initBlockchain(); // returns { provider, contract, wallet } as your code does
+        await initBlockchain();
         await leaderboard.initialize();
-
-        // Attach listeners immediately if possible
-        try {
-            await leaderboard.attachEventListeners();
-            console.log('✅ Leaderboard listeners attached at startup');
-            // Sync past data
-            leaderboard.syncLeaderboard();
-        } catch (err) {
-            console.warn('⚠️ Leaderboard attach/sync failed:', err.message);
-        }
-
-        // Keep the existing re/connect handlers
-        onProviderConnected(() => {
-            try {
-                leaderboard.attachEventListeners();
-                leaderboard.syncLeaderboard();
-            } catch (err) {
-                console.error('Failed to attach listeners on provider connect:', err);
-            }
-        });
-        onProviderDisconnected(() => leaderboard.detachEventListeners());
-
-        // EXPLICIT BINDING TO 0.0.0.0 (All interfaces)
-        app.listen(PORT, '0.0.0.0', () =>
-            console.log(`🚀 Based on Typing Backend running on http://0.0.0.0:${PORT}`)
-        );
+        isInitialized = true;
+        console.log('✅ Server initialized');
     } catch (err) {
-        console.error('Failed to start server:', err);
-        process.exit(1);
+        console.error('❌ Initialization failed:', err);
     }
 }
 
-start();
-
-// Global Error Handlers
-process.on('uncaughtException', (err) => {
-    console.error('❌ Uncaught Exception:', err);
-    // Keep the process alive, but log the error
+// Middleware to ensure initialization
+app.use(async (req, res, next) => {
+    if (!isInitialized) {
+        await ensureInitialized();
+    }
+    next();
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-    // Keep the process alive
-});
+// Start server ONLY if running directly (not imported by Vercel)
+if (require.main === module) {
+    const PORT = process.env.PORT || 3001;
+    app.listen(PORT, '0.0.0.0', async () => {
+        console.log(`🚀 Based on Typing Backend running on http://0.0.0.0:${PORT}`);
+        // Initialize immediately when running locally
+        await ensureInitialized();
+    });
+}
 
 module.exports = app;
