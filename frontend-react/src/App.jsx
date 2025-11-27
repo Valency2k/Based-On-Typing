@@ -272,8 +272,7 @@ const GamePage = () => {
 
   useEffect(() => {
     if (account) {
-      fetch(`http://localhost:3001/api/achievements/${account}`)
-        .then(res => res.json())
+      api.fetchAchievements(account)
         .then(data => {
           if (data.success) setInitialAchievements(data.unlocked);
         })
