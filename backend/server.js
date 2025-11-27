@@ -42,12 +42,32 @@ const achievements = require('./achievements');
 onProviderConnected(() => {
     console.log("🔗 Blockchain connected - Attaching listeners...");
     leaderboard.attachEventListeners();
-    leaderboard.syncLeaderboard();
+    leaderboard.syncLeaderboard(); // Auto-sync enabled
 });
 
 onProviderDisconnected(() => {
     console.log("🔌 Blockchain disconnected - Detaching listeners...");
     leaderboard.detachEventListeners();
+});
+
+// ... (MongoDB Connection code) ...
+
+// Add Sync Endpoint
+app.get('/api/sync', async (req, res) => {
+    try {
+        // Trigger sync in background (or await it if we want to see result, but might timeout)
+        // For Vercel, we must await it or it gets killed.
+        // We'll await it but with a shorter lookback if possible, or just hope it finishes in 10s.
+        // Better: just trigger it and return success, hoping Vercel keeps it alive for a bit?
+        // No, Vercel freezes execution.
+
+        // Let's await it.
+        await leaderboard.syncLeaderboard();
+        res.json({ success: true, message: "Sync completed" });
+    } catch (err) {
+        console.error("Sync error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 // MongoDB Connection
