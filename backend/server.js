@@ -88,8 +88,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use(async (req, res, next) => {
-    // Skip init for health/status checks to avoid blocking them if DB is down
-    if (req.path === '/api/status' || req.path === '/api/health' || req.path === '/api/ping') {
+    // Skip init for health/ping checks to avoid blocking them if DB is down
+    if (req.path === '/api/health' || req.path === '/api/ping') {
         return next();
     }
 
