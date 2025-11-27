@@ -38,6 +38,18 @@ const paragraph = require('./paragraph');
 const dailyChallenge = require('./dailyChallenge');
 const achievements = require('./achievements');
 
+// Wire up Blockchain Events
+onProviderConnected(() => {
+    console.log("🔗 Blockchain connected - Attaching listeners...");
+    leaderboard.attachEventListeners();
+    leaderboard.syncLeaderboard();
+});
+
+onProviderDisconnected(() => {
+    console.log("🔌 Blockchain disconnected - Detaching listeners...");
+    leaderboard.detachEventListeners();
+});
+
 // MongoDB Connection
 const client = new MongoClient(process.env.MONGODB_URI || "mongodb://localhost:27017/dummy", {
     serverSelectionTimeoutMS: 5000, // Fail fast if IP is blocked
