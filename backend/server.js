@@ -14,8 +14,8 @@ const missingEnv = requiredEnv.filter(key => !process.env[key]);
 
 if (missingEnv.length > 0) {
     console.error(`❌ CRITICAL: Missing required environment variables: ${missingEnv.join(', ')}`);
-    console.error('Please check your .env file.');
-    process.exit(1);
+    console.error('Server will start in LIMITED MODE (No Database).');
+    // process.exit(1); // Don't crash, just run without DB
 }
 
 if (!process.env.PRIVATE_KEY) {
