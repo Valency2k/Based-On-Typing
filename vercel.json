@@ -13,6 +13,11 @@
             }
         }
     ],
+    "functions": {
+        "api/index.js": {
+            "runtime": "@vercel/node"
+        }
+    },
     "rewrites": [
         {
             "source": "/api/(.*)",

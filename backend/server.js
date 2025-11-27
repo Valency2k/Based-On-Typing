@@ -100,6 +100,11 @@ apiRouter.get('/status', async (req, res) => {
     res.json({ status });
 });
 
+// Ping endpoint (No dependencies)
+apiRouter.get('/ping', (req, res) => {
+    res.send('pong');
+});
+
 // Leaderboard endpoints
 apiRouter.get('/leaderboard', (req, res) => res.redirect('/api/leaderboard/global'));
 apiRouter.get('/leaderboard/global', leaderboard.getGlobalHandler);
