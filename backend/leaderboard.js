@@ -218,31 +218,6 @@ async function getGlobalHandler(req, res) {
         const period = req.query.period || 'all';
 
         let query = {};
-        if (period === 'weekly') {
-            const startOfWeek = getStartOfWeek();
-            query.timestamp = { $gte: startOfWeek };
-        }
-
-        // Aggregation pipeline to get best score per player
-        const pipeline = [
-            { $match: query },
-            { $sort: { wpm: -1, score: -1 } },
-            {
-                $group: {
-                    _id: "$playerAddress",
-                    doc: { $first: "$$ROOT" }
-                }
-            },
-            { $replaceRoot: { newRoot: "$doc" } },
-            { $sort: { wpm: -1, score: -1 } },
-            { $skip: offset },
-            { $limit: limit }
-        ];
-
-        const entries = await collection.aggregate(pipeline).toArray();
-        const total = await collection.distinct('playerAddress', query).then(l => l.length);
-
-        res.json({ success: true, entries, total });
     } catch (err) {
         console.error("Global leaderboard error:", err);
         res.status(500).json({ success: false, error: err.message });
