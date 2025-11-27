@@ -49,8 +49,11 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'))); // Serve static files (images)
 
+// API Router
+const apiRouter = express.Router();
+
 // Metadata Endpoint for NFTs
-app.get('/api/metadata/:id', (req, res) => {
+apiRouter.get('/metadata/:id', (req, res) => {
     const id = req.params.id;
     const achievementNames = {
         "1": "First Steps",
@@ -68,7 +71,7 @@ app.get('/api/metadata/:id', (req, res) => {
     const metadata = {
         name: `Typing Achievement: ${achievementNames[id]}`,
         description: "Awarded for mastering the Based On Typing game.",
-        image: `${req.protocol}://${req.get('host')}/achievements/${id}.png`,
+        image: `${process.env.FRONTEND_URL || (req.protocol + '://' + req.get('host'))}/achievements/${id}.png`,
         attributes: [
             { trait_type: "Type", value: achievementNames[id] }
         ]
@@ -77,47 +80,27 @@ app.get('/api/metadata/:id', (req, res) => {
     res.json(metadata);
 });
 
-// CSP Middleware to allow development connections
-app.use((req, res, next) => {
-    res.setHeader(
-        "Content-Security-Policy",
-        "default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline';"
-    );
-    next();
-});
-
-// Root endpoint to fix 404 and CSP issues
-app.get('/', (req, res) => {
-    res.send('Based on Typing Backend is Running!');
-});
-
-// Handle Chrome DevTools requests to prevent errors
-app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
-    res.status(404).send();
-});
-
 // Health endpoint
-app.get('/api/status', async (req, res) => {
+apiRouter.get('/status', async (req, res) => {
     const status = await getStatus();
     res.json({ status });
 });
 
 // Leaderboard endpoints
-app.get('/api/leaderboard', (req, res) => res.redirect('/api/leaderboard/global')); // Redirect base path to global
-app.get('/api/leaderboard/global', leaderboard.getGlobalHandler);
-app.get('/api/leaderboard/:mode', leaderboard.getModeHandler);
-app.get('/api/leaderboard/player/:address', leaderboard.getPlayerHandler);
+apiRouter.get('/leaderboard', (req, res) => res.redirect('/api/leaderboard/global'));
+apiRouter.get('/leaderboard/global', leaderboard.getGlobalHandler);
+apiRouter.get('/leaderboard/:mode', leaderboard.getModeHandler);
+apiRouter.get('/leaderboard/player/:address', leaderboard.getPlayerHandler);
 
 // Daily Challenge endpoint
-app.get('/api/daily-challenge', dailyChallenge.getHandler);
+apiRouter.get('/daily-challenge', dailyChallenge.getHandler);
 
 // Paragraph endpoints
-app.post('/api/paragraph/start', paragraph.startHandler);
-app.post('/api/paragraph/submit', paragraph.submitHandler);
-// app.get('/api/paragraph/:sessionId', paragraph.getHandler); // Not implemented yet?
+apiRouter.post('/paragraph/start', paragraph.startHandler);
+apiRouter.post('/paragraph/submit', paragraph.submitHandler);
 
 // Achievements endpoint
-app.get('/api/achievements/:address', async (req, res) => {
+apiRouter.get('/achievements/:address', async (req, res) => {
     try {
         const { unlocked, minted } = await achievements.getAchievements(req.params.address);
         res.json({ success: true, unlocked, minted });
@@ -127,7 +110,7 @@ app.get('/api/achievements/:address', async (req, res) => {
 });
 
 // Mint Achievement Endpoint
-app.post('/api/achievements/mint', async (req, res) => {
+apiRouter.post('/achievements/mint', async (req, res) => {
     try {
         const { playerAddress, achievementId } = req.body;
         if (!playerAddress || !achievementId) {
@@ -143,7 +126,7 @@ app.post('/api/achievements/mint', async (req, res) => {
 });
 
 // Game Signing endpoint
-app.post('/api/game/sign', async (req, res) => {
+apiRouter.post('/game/sign', async (req, res) => {
     try {
         const { player, sessionId, wordsTyped, correctWords, mistakes, correctCharacters, wpm } = req.body;
 
@@ -158,6 +141,10 @@ app.post('/api/game/sign', async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
+
+// Mount Router
+app.use('/api', apiRouter);
+app.use('/', apiRouter); // Handle cases where Vercel strips /api prefix
 
 let isInitialized = false;
 async function ensureInitialized() {
