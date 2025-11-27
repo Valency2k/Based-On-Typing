@@ -93,7 +93,7 @@ export function WalletProvider({ children }) {
         }
 
         try {
-            const _provider = new ethers.providers.Web3Provider(window.ethereum);
+            const _provider = new ethers.providers.Web3Provider(window.ethereum, "any");
             await _provider.send("eth_requestAccounts", []);
 
             const _network = await _provider.getNetwork();
