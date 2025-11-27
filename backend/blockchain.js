@@ -16,17 +16,45 @@ let wallet;
 let connected = false;
 const internalEmitter = new EventEmitter();
 
-async function initBlockchain() {
+async function getWorkingProvider() {
     // List of reliable public RPCs
     const rpcUrls = [
-        "https://mainnet.base.org"
+        "https://mainnet.base.org",
+        "https://base.llamarpc.com",
+        "https://base-mainnet.public.blastapi.io",
+        "https://1rpc.io/base"
     ];
 
-    // Pick a random one to start with to distribute load
-    const rpcUrl = rpcUrls[0];
-    console.log(`Using RPC: ${rpcUrl}`);
+    // Shuffle array to distribute load
+    const shuffled = rpcUrls.sort(() => 0.5 - Math.random());
 
-    provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+    for (const url of shuffled) {
+        try {
+            console.log(`Testing RPC: ${url}`);
+            const tempProvider = new ethers.providers.JsonRpcProvider(url);
+            // fast timeout check
+            await Promise.race([
+                tempProvider.getBlockNumber(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+            ]);
+            console.log(`✅ Connected to RPC: ${url}`);
+            return tempProvider;
+        } catch (err) {
+            console.warn(`⚠️ RPC failed: ${url} - ${err.message}`);
+        }
+    }
+    throw new Error("All RPC endpoints failed");
+}
+
+async function initBlockchain() {
+    try {
+        provider = await getWorkingProvider();
+    } catch (err) {
+        console.error("❌ CRITICAL: Could not connect to any RPC provider");
+        connected = false;
+        internalEmitter.emit("disconnected");
+        return; // Don't crash, just return. The interval will try again.
+    }
 
     // READ-ONLY CONTRACT
     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
@@ -54,20 +82,17 @@ async function initBlockchain() {
         console.log("⚠️ No PRIVATE_KEY found — contract will be READ ONLY");
     }
 
-    // RPC connectivity check (Non-blocking)
-    provider.getBlockNumber().then(() => {
-        connected = true;
-        console.log("🌐 RPC provider connected");
-        internalEmitter.emit("connected");
-    }).catch((err) => {
-        connected = false;
-        console.error("❌ BLOCKCHAIN OFFLINE:", err.message);
-        internalEmitter.emit("disconnected");
-    });
+    connected = true;
+    internalEmitter.emit("connected");
 
     // periodic RPC check (Only run if NOT on Vercel)
     if (!process.env.VERCEL) {
+        // Clear existing interval if any (though this function is usually called once)
+        // Ideally we should have a way to stop the old interval if re-initializing.
+        // For now, we assume initBlockchain is called once or handles it.
+
         setInterval(async () => {
+            if (!provider) return;
             try {
                 await provider.getBlockNumber();
                 if (!connected) {
@@ -76,10 +101,28 @@ async function initBlockchain() {
                     internalEmitter.emit("connected");
                 }
             } catch (err) {
+                console.error("❌ RPC Check failed:", err.message);
                 if (connected) {
                     connected = false;
-                    console.error("❌ RPC provider disconnected:", err.message);
                     internalEmitter.emit("disconnected");
+                }
+                // Attempt to reconnect
+                console.log("🔄 Attempting to switch RPC...");
+                try {
+                    const newProvider = await getWorkingProvider();
+                    provider = newProvider;
+                    // Re-connect wallet/contracts
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+                    if (wallet) {
+                        wallet = wallet.connect(provider);
+                        contract = contract.connect(wallet);
+                        if (achievementContract) achievementContract = achievementContract.connect(wallet);
+                    }
+                    connected = true;
+                    console.log("✅ Switched to new RPC provider");
+                    internalEmitter.emit("connected");
+                } catch (reconnectErr) {
+                    console.error("❌ Reconnection failed:", reconnectErr.message);
                 }
             }
         }, 15000);

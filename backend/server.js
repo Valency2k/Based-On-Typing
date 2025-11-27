@@ -8,6 +8,20 @@ const path = require('path');
 
 const PORT = process.env.PORT || 3001;
 
+// Environment Validation
+const requiredEnv = ['MONGODB_URI'];
+const missingEnv = requiredEnv.filter(key => !process.env[key]);
+
+if (missingEnv.length > 0) {
+    console.error(`❌ CRITICAL: Missing required environment variables: ${missingEnv.join(', ')}`);
+    console.error('Please check your .env file.');
+    process.exit(1);
+}
+
+if (!process.env.PRIVATE_KEY) {
+    console.warn('⚠️ WARNING: PRIVATE_KEY is missing. The server will run in READ-ONLY mode (no game signing).');
+}
+
 // Modular imports
 const { MongoClient } = require('mongodb');
 const {

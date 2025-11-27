@@ -5,10 +5,12 @@ const utils = require('./utils');
 let listenersAttached = false;
 let db;
 let collection;
+let systemCollection;
 
 function setDb(database) {
     db = database;
     collection = db.collection('leaderboard');
+    systemCollection = db.collection('system_state');
     // Create indexes
     collection.createIndex({ playerAddress: 1, mode: 1 });
     collection.createIndex({ mode: 1, score: -1 });
@@ -119,20 +121,67 @@ async function syncLeaderboard() {
         return;
     }
 
-    console.log('🔄 Syncing leaderboard from blockchain history (last 2000 blocks)...');
+    if (!systemCollection) {
+        console.error("❌ System collection not initialized");
+        return;
+    }
+
+    console.log('🔄 Syncing leaderboard...');
+
     try {
-        const filter = contract.filters.GameCompleted();
-        // Reduced range to avoid rate limits and timeouts
-        const events = await contract.queryFilter(filter, -2000);
+        // Get last synced block
+        let startBlock = 0;
+        const state = await systemCollection.findOne({ _id: 'leaderboard_sync' });
+        const currentBlock = await contract.provider.getBlockNumber();
 
-        console.log(`Found ${events.length} historical GameCompleted events.`);
-
-        for (const event of events) {
-            const { player, sessionId, wordsTyped, accuracy, timestamp } = event.args;
-            await processGameCompletion(player, sessionId, wordsTyped, accuracy, timestamp);
+        if (state && state.lastBlock) {
+            startBlock = state.lastBlock + 1;
+            console.log(`   Resuming from block ${startBlock}`);
+        } else {
+            // Default lookback: 10000 blocks (~5.5 hours on Base)
+            startBlock = Math.max(0, currentBlock - 10000);
+            console.log(`   No sync state. Starting from block ${startBlock}`);
         }
 
-        console.log('✅ Leaderboard sync complete.');
+        if (startBlock > currentBlock) {
+            console.log("   Already up to date.");
+            return;
+        }
+
+        const CHUNK_SIZE = 2000;
+        let fromBlock = startBlock;
+        let totalEvents = 0;
+
+        while (fromBlock <= currentBlock) {
+            const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
+            console.log(`   Fetching events ${fromBlock} to ${toBlock}...`);
+
+            try {
+                const filter = contract.filters.GameCompleted();
+                const events = await contract.queryFilter(filter, fromBlock, toBlock);
+
+                for (const event of events) {
+                    const { player, sessionId, wordsTyped, accuracy, timestamp } = event.args;
+                    await processGameCompletion(player, sessionId, wordsTyped, accuracy, timestamp);
+                }
+
+                totalEvents += events.length;
+
+                // Update state
+                await systemCollection.updateOne(
+                    { _id: 'leaderboard_sync' },
+                    { $set: { lastBlock: toBlock } },
+                    { upsert: true }
+                );
+
+                fromBlock = toBlock + 1;
+            } catch (chunkErr) {
+                console.error(`   ❌ Error fetching chunk ${fromBlock}-${toBlock}:`, chunkErr.message);
+                break;
+            }
+        }
+
+        console.log(`✅ Leaderboard sync complete. Processed ${totalEvents} events.`);
     } catch (err) {
         console.error('❌ Error syncing leaderboard:', err.message);
     }
