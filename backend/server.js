@@ -141,6 +141,31 @@ app.post('/api/achievements/mint', async (req, res) => {
     }
 });
 
+app.post('/api/game/sign', async (req, res) => {
+    try {
+        const { player, sessionId, wordsTyped, correctWords, mistakes, correctCharacters, wpm } = req.body;
+
+        if (!player || !sessionId) {
+            return res.status(400).json({ success: false, error: "Missing required fields" });
+        }
+
+        const signature = await signGameResult(
+            player,
+            sessionId,
+            wordsTyped,
+            correctWords,
+            mistakes,
+            correctCharacters,
+            wpm
+        );
+
+        res.json({ success: true, signature });
+    } catch (err) {
+        console.error("Signing Error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 
 // Start server ONLY if running directly (not imported by Vercel)
 if (require.main === module) {
