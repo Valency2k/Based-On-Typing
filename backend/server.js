@@ -82,6 +82,7 @@ async function connectDB() {
     if (!process.env.MONGODB_URI) {
         dbStatus = "Missing MONGODB_URI";
         console.error("❌ DB Status: Missing MONGODB_URI");
+        console.error("❌ DB Status: Missing MONGODB_URI - Check Vercel Environment Variables!");
         return;
     }
 

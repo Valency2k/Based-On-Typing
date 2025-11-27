@@ -218,6 +218,31 @@ async function getGlobalHandler(req, res) {
         const period = req.query.period || 'all';
 
         let query = {};
+        if (period === 'weekly') {
+            const startOfWeek = getStartOfWeek();
+            query.timestamp = { $gte: startOfWeek };
+        }
+
+        const pipeline = [
+            { $match: query },
+            { $sort: { score: -1, wpm: -1 } },
+            {
+                $group: {
+                    _id: "$playerAddress",
+                    doc: { $first: "$$ROOT" }
+                }
+            },
+            { $replaceRoot: { newRoot: "$doc" } },
+            { $sort: { score: -1, wpm: -1 } },
+            { $skip: offset },
+            { $limit: limit }
+        ];
+
+        const entries = await collection.aggregate(pipeline).toArray();
+        // Better approximation for unique players:
+        const total = (await collection.distinct('playerAddress', query)).length;
+
+        res.json({ success: true, entries, total });
     } catch (err) {
         console.error("Global leaderboard error:", err);
         res.status(500).json({ success: false, error: err.message });
@@ -234,25 +259,6 @@ async function getModeHandler(req, res) {
         const period = req.query.period || 'all';
 
         let query = { mode };
-
-        if (mode === 3) { // Daily Challenge
-            // For daily challenge, we might want "today's" scores or just all time bests for daily mode?
-            // Usually daily challenge is specific to a day.
-            // The frontend seems to filter by "today" in the old code.
-            const todayStart = new Date().setUTCHours(0, 0, 0, 0) / 1000; // Seconds
-            // Actually, timestamp in DB is seconds (from contract) or ms (from Date.now())?
-            // Contract uses block.timestamp (seconds).
-            // Date.now() is ms.
-            // In processGameCompletion: timestamp: Number(session.endTime) || Date.now()
-            // session.endTime is seconds. Date.now() is ms.
-            // This is a bug in the old code too if mixed.
-            // Assuming seconds for now as contract is primary.
-            // Let's fix the query to handle seconds.
-
-            // Wait, if we use Date.now() fallback, it's ms.
-            // Let's ensure we store seconds.
-            // In processGameCompletion: timestamp: Number(session.endTime) || Math.floor(Date.now() / 1000)
-        }
 
         if (period === 'weekly') {
             const startOfWeek = getStartOfWeek();
