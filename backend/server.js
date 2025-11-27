@@ -114,8 +114,31 @@ app.get('/api/leaderboard/global', leaderboard.getGlobalHandler);
 app.get('/api/leaderboard/player/:address', leaderboard.getPlayerHandler);
 app.get('/api/leaderboard/:mode', leaderboard.getModeHandler);
 
-// Add other routes as needed based on imports
-// app.get('/api/achievements/:address', achievements.getAchievements); // Example
+app.get('/api/daily-challenge', dailyChallenge.getHandler);
+
+app.post('/api/paragraph/start', paragraph.startHandler);
+app.post('/api/paragraph/submit', paragraph.submitHandler);
+
+app.get('/api/achievements/:address', async (req, res) => {
+    try {
+        const data = await achievements.getAchievements(req.params.address);
+        res.json({ success: true, ...data });
+    } catch (err) {
+        console.error("Achievements Error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/achievements/mint', async (req, res) => {
+    try {
+        const { playerAddress, achievementId } = req.body;
+        const result = await achievements.mintAchievement(playerAddress, achievementId);
+        res.json({ success: true, ...result });
+    } catch (err) {
+        console.error("Minting Error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 
 

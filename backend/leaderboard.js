@@ -328,6 +328,27 @@ async function count() {
     return await collection.countDocuments();
 }
 
+async function getTopScores(mode, limit = 10) {
+    if (!collection) return [];
+
+    // Aggregation for best per player in this mode
+    const pipeline = [
+        { $match: { mode } },
+        { $sort: { wpm: -1, score: -1 } },
+        {
+            $group: {
+                _id: "$playerAddress",
+                doc: { $first: "$$ROOT" }
+            }
+        },
+        { $replaceRoot: { newRoot: "$doc" } },
+        { $sort: { wpm: -1, score: -1 } },
+        { $limit: limit }
+    ];
+
+    return await collection.aggregate(pipeline).toArray();
+}
+
 module.exports = {
     setDb,
     initialize,
@@ -337,6 +358,7 @@ module.exports = {
     getGlobalHandler,
     getModeHandler,
     getPlayerHandler,
+    getTopScores,
     count,
     isInitialized: () => !!collection
 };

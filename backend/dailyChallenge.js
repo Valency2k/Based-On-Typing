@@ -28,11 +28,7 @@ async function getHandler(req, res) {
         const wordCount = text.split(' ').length;
 
         // Fetch top 10 daily challenge scores
-        const allData = await leaderboard.readFileSafe();
-        const dailyScores = allData
-            .filter(e => e.mode === 3) // 3 is Daily Challenge
-            .sort((a, b) => b.wpm - a.wpm)
-            .slice(0, 10);
+        const dailyScores = await leaderboard.getTopScores(3, 10);
 
         res.json({
             text,
