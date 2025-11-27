@@ -6,7 +6,7 @@ const { EventEmitter } = require('events');
 // Load contract ABI and address
 const contractABIJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'contractABI.json'), 'utf8'));
 const CONTRACT_ABI = contractABIJson.abi || contractABIJson; // Handle both formats
-const CONTRACT_ADDRESS = '0x82ca85c51d6018888fD3A9281156E8e358BFcb42';
+const CONTRACT_ADDRESS = '0x3D3Ad08e745B961480f919eCc23b53D34912E3d4';
 
 // Global state
 let provider;

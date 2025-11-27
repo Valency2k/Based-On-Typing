@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import contractABI from '../contractABI.json';
 
 // Default to localhost if not set
-const CONTRACT_ADDRESS = '0xe5F8Cb182473517a265003d38D60d87e106901d8';
+const CONTRACT_ADDRESS = '0x3D3Ad08e745B961480f919eCc23b53D34912E3d4';
 const RPC_URL = 'https://base.llamarpc.com';
 
 export function useWeb3() {

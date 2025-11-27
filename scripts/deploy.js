@@ -9,7 +9,7 @@ async function main() {
     // ==========================================
     const INITIAL_ETH_PRICE_IN_CENTS = 340000; // Updated to $3,400.00
     console.log(`📊 Using ETH price: $${INITIAL_ETH_PRICE_IN_CENTS / 100}`);
-    console.log(`💰 Game fee: $0.20 USD\n`);
+    console.log(`💰 Game fee: $0.10 USD\n`);
 
     // ==========================================
     // 2. DEPLOY CONTRACT

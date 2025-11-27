@@ -32,7 +32,7 @@ contract AchievementNFT is ERC721, Ownable {
     // Fee Management
     AggregatorV3Interface internal priceFeed;
     address public signer;
-    uint256 public constant MINT_FEE_USD = 60; // $0.60 USD in cents
+    uint256 public constant MINT_FEE_USD = 40; // $0.40 USD in cents
     uint256 public ethPriceInCents; // Fallback price
     
     event FeePaid(address indexed player, uint256 amount);

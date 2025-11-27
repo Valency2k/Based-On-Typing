@@ -17,8 +17,8 @@ These are needed for the React website to work.
 | :--- | :--- | :--- |
 | `VITE_RPC_URL` | `https://mainnet.base.org` | |
 | `VITE_API_URL` | ` ` (Leave Empty) | **Important**: Leave this value empty so it uses relative paths (`/api/...`) which Vercel handles automatically. |
-| `VITE_CONTRACT_ADDRESS` | `0x82ca85c51d6018888fD3A9281156E8e358BFcb42` | |
-| `VITE_ACHIEVEMENT_CONTRACT_ADDRESS` | `0x3BF06869Dae75c7742054096339E81dAAaacDA99` | |
+| `VITE_CONTRACT_ADDRESS` | `0x3D3Ad08e745B961480f919eCc23b53D34912E3d4` | |
+| `VITE_ACHIEVEMENT_CONTRACT_ADDRESS` | `0xf5f7F34667fC5Cc4f1235E2c9cBebDBc2cd2A291` | |
 
 ### Backend Variables
 These are needed for the serverless functions (database, signing transactions).
@@ -27,7 +27,7 @@ These are needed for the serverless functions (database, signing transactions).
 | :--- | :--- | :--- |
 | `MONGODB_URI` | `mongodb+srv://Valency:Josh1129@basedontyping0.1dcyrek.mongodb.net/?appName=BasedOnTyping0` | Your new MongoDB URI. |
 | `PRIVATE_KEY` | *(Your Wallet Private Key)* | **Keep this secret!** Do not share it. |
-| `ACHIEVEMENT_CONTRACT_ADDRESS` | `0x3BF06869Dae75c7742054096339E81dAAaacDA99` | Same as the frontend one, but without `VITE_`. |
+| `ACHIEVEMENT_CONTRACT_ADDRESS` | `0xf5f7F34667fC5Cc4f1235E2c9cBebDBc2cd2A291` | Same as the frontend one, but without `VITE_`. |
 
 ### After Adding Variables
 Once you have added all variables:

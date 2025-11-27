@@ -1,0 +1,11 @@
+{
+    "name": "First Steps",
+    "description": "Complete your first game",
+    "image": "https://based-on-typing.vercel.app/achievements/1.png",
+    "attributes": [
+        {
+            "trait_type": "Achievement",
+            "value": "First Steps"
+        }
+    ]
+}

@@ -4,7 +4,7 @@ import contractABI from '../contractABI.json';
 
 const WalletContext = createContext();
 
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x82ca85c51d6018888fD3A9281156E8e358BFcb42';
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x3D3Ad08e745B961480f919eCc23b53D34912E3d4';
 // if (!CONTRACT_ADDRESS) console.error("Missing VITE_CONTRACT_ADDRESS in .env");
 
 const BASE_CHAIN_ID = 8453;

@@ -12,7 +12,7 @@ This guide covers the **Paragraph Mode** feature added to the "Based on Typing" 
 ✅ **On-Chain Hash Verification** - Only the keccak256 hash is stored on-chain  
 ✅ **Off-Chain Paragraph Storage** - Backend stores full paragraph text  
 ✅ **Time Limit Options** - 15s, 30s, 45s, 60s, 120s, 180s  
-✅ **$0.20 USD Fee** - Same developer fee as other modes  
+✅ **$0.10 USD Fee** - Same developer fee as other modes  
 ✅ **Real-Time WPM Calculation** - Industry-standard formula  
 ✅ **Session Tracking** - Full on-chain session metadata  
 
@@ -65,7 +65,7 @@ function startParagraphMode(uint256 timeLimitSeconds, bytes32 paragraphHash)
 
 **Validates:**
 - Time limit is one of: 15, 30, 45, 60, 120, 180 seconds
-- Fee payment ($0.20 USD in Base ETH)
+- Fee payment ($0.10 USD in Base ETH)
 - Stores paragraph hash on-chain
 
 ---
@@ -335,7 +335,7 @@ https://sepolia.basescan.org/address/YOUR_CONTRACT_ADDRESS
 
 Paragraph mode uses the **same fee structure** as other modes:
 
-- **Fee:** $0.20 USD worth of Base ETH
+- **Fee:** $0.10 USD worth of Base ETH
 - **Calculation:** Contract calls Chainlink price feed (or manual update)
 - **Payment:** Required before game starts
 - **Refund:** Excess ETH automatically refunded

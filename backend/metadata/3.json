@@ -1,0 +1,11 @@
+{
+    "name": "Perfectionist",
+    "description": "100% Accuracy",
+    "image": "https://based-on-typing.vercel.app/achievements/3.png",
+    "attributes": [
+        {
+            "trait_type": "Achievement",
+            "value": "Perfectionist"
+        }
+    ]
+}

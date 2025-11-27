@@ -1,0 +1,11 @@
+{
+    "name": "Speed Demon",
+    "description": "Reach 80 WPM",
+    "image": "https://based-on-typing.vercel.app/achievements/2.png",
+    "attributes": [
+        {
+            "trait_type": "Achievement",
+            "value": "Speed Demon"
+        }
+    ]
+}

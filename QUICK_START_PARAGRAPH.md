@@ -103,7 +103,7 @@ startParagraphMode(timeLimit, paragraphHash)
     ↓
 Validate timeLimit ∈ {15,30,45,60,120,180}
     ↓
-Collect $0.20 fee in Base ETH
+Collect $0.10 fee in Base ETH
     ↓
 Create session with paragraphHash
     ↓
@@ -286,7 +286,7 @@ Before going to production:
 Paragraph Mode is now fully integrated! Players can:
 - ✅ Type real paragraphs from free APIs
 - ✅ Choose time limits (15s - 180s)
-- ✅ Pay $0.20 fee per game
+- ✅ Pay $0.10 fee per game
 - ✅ Track stats on-chain
 - ✅ Compete for best WPM scores
 

@@ -1,6 +1,6 @@
 # ⚡ Based on Typing
 
-A blockchain-enhanced typing game built on the Base network. Players pay $0.20 in ETH to play various typing game modes, with all sessions recorded on-chain.
+A blockchain-enhanced typing game built on the Base network. Players pay $0.10 in ETH to play various typing game modes, with all sessions recorded on-chain.
 
 ## 🎮 Game Modes
 
@@ -29,7 +29,7 @@ Complete today's unique challenge!
 
 ## 💰 Pricing
 
-- **Game Fee**: $0.20 USD (paid in Base ETH)
+- **Game Fee**: $0.10 USD (paid in Base ETH)
 - Fee is automatically calculated based on current ETH price
 - No rewards - this is a pay-to-play game
 
@@ -119,7 +119,7 @@ Based on Typing/
 
 ### Update ETH Price
 
-The developer must update the ETH price periodically to maintain the $0.20 fee:
+The developer must update the ETH price periodically to maintain the $0.10 fee:
 
 ```javascript
 // Connect to the deployed contract
@@ -145,14 +145,14 @@ activeNetwork: 'mainnet'
 
 1. **Connect Wallet**: Click "Connect Wallet" and approve MetaMask
 2. **Select Mode**: Choose your preferred game mode
-3. **Pay Fee**: Approve the $0.20 transaction
+3. **Pay Fee**: Approve the $0.10 transaction
 4. **Start Typing**: Type the words as they appear
 5. **View Results**: See your stats and blockchain confirmation
 
 ## 📊 Smart Contract Features
 
 - ✅ Four distinct game modes
-- ✅ Automatic $0.20 USD fee calculation
+- ✅ Automatic $0.10 USD fee calculation
 - ✅ On-chain game session storage
 - ✅ Daily challenge generation
 - ✅ Player history tracking

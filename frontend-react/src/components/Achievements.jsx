@@ -15,7 +15,7 @@ const ACHIEVEMENTS = [
     { id: 6, name: "Daily Champion", description: "Complete a Daily Challenge", image: "/achievements/6.png" }
 ];
 
-const ACHIEVEMENT_CONTRACT_ADDRESS = import.meta.env.VITE_ACHIEVEMENT_CONTRACT_ADDRESS || "0x26a16721D790C10DeC598d3e0fCA515e39Cb401c";
+const ACHIEVEMENT_CONTRACT_ADDRESS = import.meta.env.VITE_ACHIEVEMENT_CONTRACT_ADDRESS || "0xf5f7F34667fC5Cc4f1235E2c9cBebDBc2cd2A291";
 
 export const Achievements = ({ unlocked = [], minted = [], account }) => {
     const { signer } = useWallet();

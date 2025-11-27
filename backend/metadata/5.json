@@ -1,0 +1,11 @@
+{
+    "name": "Survivor",
+    "description": "Reach Level 5 in Survival",
+    "image": "https://based-on-typing.vercel.app/achievements/5.png",
+    "attributes": [
+        {
+            "trait_type": "Achievement",
+            "value": "Survivor"
+        }
+    ]
+}

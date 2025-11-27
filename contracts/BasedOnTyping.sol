@@ -20,7 +20,7 @@ contract BasedOnTyping {
     address public signer; // Server-side signer
     AggregatorV3Interface internal priceFeed;
 
-    uint256 public constant GAME_FEE_USD = 20; // $0.20 USD in cents
+    uint256 public constant GAME_FEE_USD = 10; // $0.10 USD in cents
     uint256 public ethPriceInCents; // Legacy/Fallback
     uint256 public lastPriceUpdate;
     uint256 public constant PRICE_UPDATE_INTERVAL = 1 hours;

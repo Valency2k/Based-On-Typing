@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 // Validate RPC_URL
 // Validate RPC_URL check removed as it is handled in blockchain.js
@@ -139,8 +140,6 @@ app.post('/api/achievements/mint', async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
-
-
 
 
 // Start server ONLY if running directly (not imported by Vercel)

@@ -1,0 +1,11 @@
+{
+    "name": "Daily Champion",
+    "description": "Complete a Daily Challenge",
+    "image": "https://based-on-typing.vercel.app/achievements/6.png",
+    "attributes": [
+        {
+            "trait_type": "Achievement",
+            "value": "Daily Champion"
+        }
+    ]
+}
