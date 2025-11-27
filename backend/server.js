@@ -66,29 +66,27 @@ async function connectDB() {
     }
 }
 
-// ... (API Router and endpoints remain the same) ...
-
 let isInitialized = false;
+
 async function ensureInitialized() {
     if (isInitialized) return;
 
-    // 1. Connect DB
-    if (dbStatus !== "Connected") {
-        await connectDB();
-    }
+    console.log("⚙️ Initializing Backend...");
 
-    // 2. Init Blockchain
-    try {
-        await initBlockchain();
-        await leaderboard.initialize();
-        isInitialized = true;
-        console.log('✅ Server initialized');
-    } catch (err) {
-        console.error('❌ Initialization failed:', err);
-    }
+    // 1. Connect to MongoDB
+    await connectDB();
+
+    // 2. Initialize Blockchain
+    await initBlockchain();
+
+    isInitialized = true;
+    console.log("✅ Backend Initialized");
 }
 
-// Middleware to ensure initialization
+const app = express();
+app.use(cors());
+app.use(express.json());
+
 app.use(async (req, res, next) => {
     // Skip init for health/status checks to avoid blocking them if DB is down
     if (req.path === '/api/status' || req.path === '/api/health' || req.path === '/api/ping') {
@@ -100,6 +98,27 @@ app.use(async (req, res, next) => {
     }
     next();
 });
+
+// ... (API Router and endpoints remain the same) ...
+// RECONSTRUCTING ROUTES REPLACING PLACEHOLDER
+app.get('/api/status', async (req, res) => {
+    res.json({
+        status: 'online',
+        db: dbStatus,
+        blockchain: await getStatus(),
+        initialized: isInitialized
+    });
+});
+
+app.get('/api/leaderboard/global', leaderboard.getGlobalHandler);
+app.get('/api/leaderboard/player/:address', leaderboard.getPlayerHandler);
+app.get('/api/leaderboard/:mode', leaderboard.getModeHandler);
+
+// Add other routes as needed based on imports
+// app.get('/api/achievements/:address', achievements.getAchievements); // Example
+
+
+
 
 // Start server ONLY if running directly (not imported by Vercel)
 if (require.main === module) {
