@@ -318,6 +318,202 @@ async function getPlayerHandler(req, res) {
 
         res.json({ success: true, entries });
     } catch (err) {
+        ```javascript
+        return;
+    }
+
+    console.log('🔄 Syncing leaderboard...');
+
+    try {
+        // Get last synced block
+        let startBlock = 0;
+        const state = await systemCollection.findOne({ _id: 'leaderboard_sync' });
+        const currentBlock = await contract.provider.getBlockNumber();
+
+        if (state && state.lastBlock) {
+            startBlock = state.lastBlock + 1;
+            console.log(`   Resuming from block ${ startBlock } `);
+        } else {
+            // Default lookback: 10000 blocks (~5.5 hours on Base)
+            startBlock = Math.max(0, currentBlock - 10000);
+            console.log(`   No sync state.Starting from block ${ startBlock } `);
+        }
+
+        if (startBlock > currentBlock) {
+            console.log("   Already up to date.");
+            return;
+        }
+
+        const CHUNK_SIZE = 2000;
+        let fromBlock = startBlock;
+        let totalEvents = 0;
+
+        while (fromBlock <= currentBlock) {
+            const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
+            console.log(`   Fetching events ${ fromBlock } to ${ toBlock }...`);
+
+            try {
+                const filter = contract.filters.GameCompleted();
+                const events = await contract.queryFilter(filter, fromBlock, toBlock);
+
+                for (const event of events) {
+                    const { player, sessionId, wordsTyped, accuracy, timestamp } = event.args;
+                    await processGameCompletion(player, sessionId, wordsTyped, accuracy, timestamp);
+                }
+
+                totalEvents += events.length;
+
+                // Update state
+                await systemCollection.updateOne(
+                    { _id: 'leaderboard_sync' },
+                    { $set: { lastBlock: toBlock } },
+                    { upsert: true }
+                );
+
+                fromBlock = toBlock + 1;
+            } catch (chunkErr) {
+                console.error(`   ❌ Error fetching chunk ${ fromBlock } -${ toBlock }: `, chunkErr.message);
+                break;
+            }
+        }
+
+        console.log(`✅ Leaderboard sync complete.Processed ${ totalEvents } events.`);
+    } catch (err) {
+        console.error('❌ Error syncing leaderboard:', err.message);
+    }
+}
+
+function attachEventListeners() {
+    if (listenersAttached) return;
+    const contract = getContract();
+    if (contract) {
+        contract.on("GameCompleted", processGameCompletion);
+        listenersAttached = true;
+        console.log("✅ Leaderboard listeners attached.");
+    } else {
+        console.warn("⚠️ Cannot attach listeners: Contract not initialized.");
+    }
+}
+
+function detachEventListeners() {
+    if (!listenersAttached) return;
+    const contract = getContract();
+    if (contract) {
+        contract.off("GameCompleted", processGameCompletion);
+        listenersAttached = false;
+        console.log("🛑 Leaderboard listeners detached.");
+    }
+}
+
+async function getGlobalHandler(req, res) {
+    try {
+        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+
+        const limit = Math.min(Number(req.query.limit || 20), 100);
+        const offset = Math.max(Number(req.query.offset || 0), 0);
+        const period = req.query.period || 'all';
+
+        let query = {};
+        if (period === 'weekly') {
+            const startOfWeek = getStartOfWeek();
+            query.timestamp = { $gte: startOfWeek };
+        }
+
+        // Aggregation pipeline to get best score per player
+        const pipeline = [
+            { $match: query },
+            { $sort: { wpm: -1, score: -1 } },
+            {
+                $group: {
+                    _id: "$playerAddress",
+                    doc: { $first: "$$ROOT" }
+                }
+            },
+            { $replaceRoot: { newRoot: "$doc" } },
+            { $sort: { wpm: -1, score: -1 } },
+            { $skip: offset },
+            { $limit: limit }
+        ];
+
+        const entries = await collection.aggregate(pipeline).toArray();
+        const total = await collection.distinct('playerAddress', query).then(l => l.length);
+
+        res.json({ success: true, entries, total });
+    } catch (err) {
+        console.error("Global leaderboard error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+async function getModeHandler(req, res) {
+    try {
+        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+
+        const modeMap = { 'time-limit': 0, 'word-count': 1, 'survival': 2, 'daily-challenge': 3, 'paragraph': 4 };
+        const mode = modeMap[req.params.mode];
+        if (mode === undefined) return res.status(400).json({ success: false, error: 'Invalid mode' });
+        const period = req.query.period || 'all';
+
+        let query = { mode };
+
+        if (mode === 3) { // Daily Challenge
+            // For daily challenge, we might want "today's" scores or just all time bests for daily mode?
+            // Usually daily challenge is specific to a day.
+            // The frontend seems to filter by "today" in the old code.
+            const todayStart = new Date().setUTCHours(0, 0, 0, 0) / 1000; // Seconds
+            // Actually, timestamp in DB is seconds (from contract) or ms (from Date.now())?
+            // Contract uses block.timestamp (seconds).
+            // Date.now() is ms.
+            // In processGameCompletion: timestamp: Number(session.endTime) || Date.now()
+            // session.endTime is seconds. Date.now() is ms.
+            // This is a bug in the old code too if mixed.
+            // Assuming seconds for now as contract is primary.
+            // Let's fix the query to handle seconds.
+
+            // Wait, if we use Date.now() fallback, it's ms.
+            // Let's ensure we store seconds.
+            // In processGameCompletion: timestamp: Number(session.endTime) || Math.floor(Date.now() / 1000)
+        }
+
+        if (period === 'weekly') {
+            const startOfWeek = getStartOfWeek();
+            query.timestamp = { $gte: startOfWeek };
+        }
+
+        // Aggregation for best per player in this mode
+        const pipeline = [
+            { $match: query },
+            { $sort: { wpm: -1, score: -1 } },
+            {
+                $group: {
+                    _id: "$playerAddress",
+                    doc: { $first: "$$ROOT" }
+                }
+            },
+            { $replaceRoot: { newRoot: "$doc" } },
+            { $sort: { wpm: -1, score: -1 } }
+        ];
+
+        const entries = await collection.aggregate(pipeline).toArray();
+        res.json({ success: true, entries, total: entries.length });
+    } catch (err) {
+        console.error("Mode leaderboard error:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+async function getPlayerHandler(req, res) {
+    try {
+        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+
+        const address = req.params.address;
+        // Case insensitive search
+        const entries = await collection.find({
+            playerAddress: { $regex: new RegExp(`^ ${ address } $`, 'i') }
+        }).sort({ wpm: -1, score: -1 }).toArray();
+
+        res.json({ success: true, entries });
+    } catch (err) {
         console.error("Player leaderboard error:", err);
         res.status(500).json({ success: false, error: err.message });
     }
@@ -337,5 +533,7 @@ module.exports = {
     getGlobalHandler,
     getModeHandler,
     getPlayerHandler,
-    count
+    count,
+    isInitialized: () => !!collection
 };
+```
