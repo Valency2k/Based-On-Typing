@@ -38,18 +38,26 @@ const dailyChallenge = require('./dailyChallenge');
 const achievements = require('./achievements');
 
 // MongoDB Connection
-const client = new MongoClient(process.env.MONGODB_URI);
+const client = new MongoClient(process.env.MONGODB_URI || "mongodb://localhost:27017/dummy"); // Prevent crash on init
 let db;
+let dbStatus = "Initializing";
 
 async function connectDB() {
+    if (!process.env.MONGODB_URI) {
+        dbStatus = "Missing MONGODB_URI";
+        console.error("❌ DB Status: Missing MONGODB_URI");
+        return;
+    }
+
     try {
         await client.connect();
-        db = client.db("basedontyping"); // Explicitly select DB if needed, or rely on URI
-        console.log('✅ MongoDB Connected (Native Driver)');
-        // Share db instance with modules
+        db = client.db("basedontyping");
+        console.log('✅ MongoDB Connected');
         leaderboard.setDb(db);
+        dbStatus = "Connected";
     } catch (err) {
         console.error('❌ MongoDB Connection Error:', err);
+        dbStatus = `Error: ${err.message}`;
     }
 }
 connectDB();
@@ -96,8 +104,15 @@ apiRouter.get('/metadata/:id', (req, res) => {
 
 // Health endpoint
 apiRouter.get('/status', async (req, res) => {
-    const status = await getStatus();
-    res.json({ status });
+    const blockchainStatus = await getStatus();
+    res.json({
+        status: blockchainStatus,
+        database: dbStatus,
+        env: {
+            hasMongoURI: !!process.env.MONGODB_URI,
+            hasPrivateKey: !!process.env.PRIVATE_KEY
+        }
+    });
 });
 
 // Ping endpoint (No dependencies)
