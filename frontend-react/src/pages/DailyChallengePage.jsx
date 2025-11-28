@@ -161,7 +161,8 @@ export default function DailyChallengePage() {
                     wordsTyped: stats.wordsTyped,
                     correctWords: stats.correctWords,
                     mistakes: stats.mistakes,
-                    correctCharacters: stats.correctCharacters
+                    correctCharacters: stats.correctCharacters,
+                    wpm: stats.wpm
                 });
 
                 if (!signData.success) throw new Error(signData.error || "Signing failed");
