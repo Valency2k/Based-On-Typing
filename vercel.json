@@ -1,32 +1,17 @@
 {
-    "frame": {
-        "name": "BasedOnTyping",
-        "tags": [
-            "gaming",
-            "typing",
-            "speedtest",
-            "base",
-            "onchain"
-        ],
-        "homeUrl": "https://based-on-typing.vercel.app",
-        "iconUrl": "https://based-on-typing.vercel.app/logo.png",
-        "ogTitle": "Prove Your WPM on Base",
-        "tagline": "Type Fast. Stay Based.",
-        "version": "1",
-        "imageUrl": "https://based-on-typing.vercel.app/logo.png",
-        "subtitle": "Type Fast. Stay Based.",
-        "webhookUrl": "https://based-on-typing.vercel.app/api/webhook",
-        "buttonTitle": "Play Now",
-        "description": "\"Dive into exciting typing battles on Base! Lock in your score on-chain and compete your way to the top of the leaderboard.\"",
-        "castShareUrl": "https://based-on-typing.vercel.app",
-        "ogDescription": "The ultimate competitive typing game on Base. Real-time leaderboards and on-chain achievements.",
-        "splashImageUrl": "https://based-on-typing.vercel.app/splash.png",
-        "primaryCategory": "games",
-        "splashBackgroundColor": "#FFFFFF"
-    },
-    "accountAssociation": {
-        "header": "",
-        "payload": "",
-        "signature": ""
-    }
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/api/health",
+            "destination": "/api/health.js"
+        },
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/index.js"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/frontend-react/dist/index.html"
+        }
+    ]
 }
