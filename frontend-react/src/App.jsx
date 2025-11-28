@@ -482,10 +482,15 @@ const GamePage = () => {
   return <div className="text-center py-20">Loading...</div>;
 };
 
+import { ResetNotification } from './components/ResetNotification';
+
+// ... existing imports ...
+
 function AppLayout() {
   const { account, connectWallet, isConnected, disconnectWallet } = useWallet();
   const { quickStats } = useStats();
   const [resetQueue, setResetQueue] = useState([]);
+  const [hasInteractedForReset, setHasInteractedForReset] = useState(false);
 
   useEffect(() => {
     const checkTime = () => {
@@ -499,6 +504,8 @@ function AppLayout() {
         // On Mondays, show Daily first, then Weekly. On other days, just Daily.
         setResetQueue(isMonday ? ['daily', 'weekly'] : ['daily']);
         localStorage.setItem('lastResetModalShown', today);
+        // Reset interaction state for new day
+        setHasInteractedForReset(false);
       }
     };
 
@@ -544,7 +551,11 @@ function AppLayout() {
         style: { background: '#1e293b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
       }} />
 
-      {resetQueue.length > 0 && (
+      {resetQueue.length > 0 && !hasInteractedForReset && (
+        <ResetNotification onConfirm={() => setHasInteractedForReset(true)} />
+      )}
+
+      {resetQueue.length > 0 && hasInteractedForReset && (
         <ResetModal
           type={resetQueue[0]}
           onClose={() => setResetQueue(prev => prev.slice(1))}
