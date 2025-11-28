@@ -9,7 +9,7 @@ export function ResetModal({ type = 'daily', onClose }) {
 
     useEffect(() => {
         // Play fanfare sound
-        const audio = new Audio('/sounds/reset-fanfare.mp3');
+        const audio = new Audio('/sounds/majestic-fanfare.mp3');
         audio.volume = 0.6;
 
         const playSound = async () => {

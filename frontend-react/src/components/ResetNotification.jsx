@@ -19,11 +19,13 @@ export function ResetNotification({ onConfirm }) {
                     <div className="absolute inset-0 bg-gradient-to-b from-gold/5 to-transparent pointer-events-none" />
 
                     <div className="relative z-10 space-y-6">
-                        <div className="text-5xl">🎁</div>
-
-                        <h2 className="text-2xl font-bold text-white">
-                            Results are In!
-                        </h2>
+                        <motion.h2
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gold via-yellow-200 to-gold"
+                        >
+                            RESULTS
+                        </motion.h2>
 
                         <p className="text-text-muted">
                             Yesterday's Daily Challenge results are out! Click below to check if you're among the winners.
