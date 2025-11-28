@@ -4,7 +4,7 @@ const config = {
     provider: process.env.AI_PROVIDER || 'huggingface',
     huggingface: {
         apiUrl:
-            'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
+            'https://router.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',
         apiKey: process.env.HUGGINGFACE_API_KEY || ''
     },
     openrouter: {
@@ -38,19 +38,28 @@ Requirements:
 Output ONLY the raw paragraph text. No titles, no bullet points, no introductions.`;
 
 async function genHF() {
-    const headers = { 'Content-Type': 'application/json' };
-    if (config.huggingface.apiKey)
-        headers['Authorization'] = `Bearer ${config.huggingface.apiKey}`;
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.huggingface.apiKey}`
+    };
+
+    // Use the OpenAI-compatible endpoint
+    const url = 'https://router.huggingface.co/v1/chat/completions';
 
     const resp = await axios.post(
-        config.huggingface.apiUrl,
-        { inputs: SYSTEM_PROMPT },
+        url,
+        {
+            model: 'meta-llama/Meta-Llama-3-8B-Instruct',
+            messages: [
+                { role: 'system', content: 'You are a creative writing assistant.' },
+                { role: 'user', content: SYSTEM_PROMPT }
+            ],
+            max_tokens: 200
+        },
         { headers }
     );
 
-    const text =
-        resp.data?.[0]?.generated_text || resp.data?.generated_text || '';
-    return cleanAIText(text);
+    return cleanAIText(resp.data.choices?.[0]?.message?.content || '');
 }
 
 async function genOR() {
@@ -92,6 +101,10 @@ async function generateAIParagraph() {
         }
     } catch (err) {
         console.error('AI generation failed:', err.message);
+        if (err.response) {
+            console.error('Status:', err.response.status);
+            console.error('Data:', JSON.stringify(err.response.data));
+        }
         return fallback();
     }
 }
