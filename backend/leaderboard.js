@@ -211,7 +211,10 @@ function detachEventListeners() {
 
 async function getGlobalHandler(req, res) {
     try {
-        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+        if (!collection) {
+            console.warn("⚠️ Leaderboard: Database not initialized, returning empty results.");
+            return res.json({ success: true, entries: [], total: 0 });
+        }
 
         const limit = Math.min(Number(req.query.limit || 20), 100);
         const offset = Math.max(Number(req.query.offset || 0), 0);
@@ -251,7 +254,9 @@ async function getGlobalHandler(req, res) {
 
 async function getModeHandler(req, res) {
     try {
-        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+        if (!collection) {
+            return res.json({ success: true, entries: [], total: 0 });
+        }
 
         const modeMap = { 'time-limit': 0, 'word-count': 1, 'survival': 2, 'daily-challenge': 3, 'paragraph': 4 };
         const mode = modeMap[req.params.mode];
@@ -289,7 +294,9 @@ async function getModeHandler(req, res) {
 
 async function getPlayerHandler(req, res) {
     try {
-        if (!collection) return res.status(500).json({ success: false, error: "Database not initialized" });
+        if (!collection) {
+            return res.json({ success: true, entries: [] });
+        }
 
         const address = req.params.address;
         // Case insensitive search

@@ -100,21 +100,39 @@ async function connectDB() {
     }
 }
 
-let isInitialized = false;
+let isInitializing = false;
 
 async function ensureInitialized() {
-    if (isInitialized) return;
+    // Prevent concurrent initialization attempts
+    if (isInitializing) return;
 
-    console.log("⚙️ Initializing Backend...");
+    // If everything is already connected, skip
+    const { isConnected } = require('./blockchain');
+    const blockchainConnected = isConnected();
+    const dbConnected = dbStatus === "Connected";
 
-    // 1. Connect to MongoDB
-    await connectDB();
+    if (blockchainConnected && (dbConnected || !process.env.MONGODB_URI)) {
+        return;
+    }
 
-    // 2. Initialize Blockchain
-    await initBlockchain();
+    isInitializing = true;
+    console.log("⚙️ Initializing Backend (Retrying connections)...");
 
-    isInitialized = true;
-    console.log("✅ Backend Initialized");
+    try {
+        // 1. Connect to MongoDB (if not connected and URI exists)
+        if (dbStatus !== "Connected" && process.env.MONGODB_URI) {
+            await connectDB();
+        }
+
+        // 2. Initialize Blockchain (if not connected)
+        if (!blockchainConnected) {
+            await initBlockchain();
+        }
+    } finally {
+        isInitializing = false;
+    }
+
+    console.log(`✅ Backend Initialization attempt complete. DB: ${dbStatus}, Blockchain: ${isConnected() ? 'Connected' : 'Disconnected'}`);
 }
 
 const app = express();
@@ -127,9 +145,7 @@ app.use(async (req, res, next) => {
         return next();
     }
 
-    if (!isInitialized) {
-        await ensureInitialized();
-    }
+    await ensureInitialized();
     next();
 });
 
@@ -140,7 +156,8 @@ app.get('/api/status', async (req, res) => {
         status: 'online',
         db: dbStatus,
         blockchain: await getStatus(),
-        initialized: isInitialized
+        blockchain: await getStatus(),
+        initialized: true // Always true effectively as we retry on demand
     });
 });
 

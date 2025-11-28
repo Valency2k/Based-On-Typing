@@ -32,7 +32,7 @@ async function getAchievements(playerAddress) {
     const achievementContract = require('./blockchain').getAchievementContract();
 
     if (!contract || !isConnected()) {
-        console.warn('Cannot fetch achievements: contract unavailable');
+        console.warn('Cannot fetch achievements: contract unavailable or not connected');
         return { unlocked: [], minted: [] };
     }
 
