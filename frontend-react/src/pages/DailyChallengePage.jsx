@@ -147,9 +147,12 @@ export default function DailyChallengePage() {
         updateStats(stats);
         setGameState('results');
 
-        // Mark as played today
+        // Mark as played today and increment attempts
         const today = new Date().toISOString().split('T')[0];
         localStorage.setItem('lastDailyChallengePlayed', today);
+
+        const currentAttempts = parseInt(localStorage.getItem('dailyChallengeAttempts') || '0');
+        localStorage.setItem('dailyChallengeAttempts', (currentAttempts + 1).toString());
 
         // Call completeGame on contract
         if (contract && sessionId) {
@@ -211,9 +214,17 @@ export default function DailyChallengePage() {
 
     if (gameState === 'intro') {
         const today = new Date().toISOString().split('T')[0];
-        const lastPlayed = localStorage.getItem('lastDailyChallengePlayed');
-        // const hasPlayed = lastPlayed === today; // DISABLED FOR TESTING
-        const hasPlayed = false;
+        const lastPlayedDate = localStorage.getItem('lastDailyChallengePlayed');
+
+        // Reset attempts if it's a new day
+        if (lastPlayedDate !== today) {
+            localStorage.setItem('dailyChallengeAttempts', '0');
+            localStorage.setItem('lastDailyChallengePlayed', today);
+        }
+
+        const attempts = parseInt(localStorage.getItem('dailyChallengeAttempts') || '0');
+        const hasPlayed = attempts >= 2;
+        const attemptsLeft = 2 - attempts;
 
         return (
             <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
@@ -222,7 +233,7 @@ export default function DailyChallengePage() {
                         Daily Challenge
                     </h2>
                     <p className="text-xl text-text-muted">
-                        Compete against everyone on the same text. One chance only.
+                        Compete against everyone on the same text. {attemptsLeft} attempts remaining today.
                     </p>
                 </div>
 
@@ -245,7 +256,7 @@ export default function DailyChallengePage() {
                     <div className="flex justify-center">
                         {hasPlayed ? (
                             <div className="text-center space-y-4">
-                                <div className="text-2xl font-bold text-success">You've already played today!</div>
+                                <div className="text-2xl font-bold text-success">You've used all attempts today!</div>
                                 <div className="text-text-muted">Come back tomorrow for a new challenge.</div>
                                 <button onClick={() => navigate('/')} className="glass px-8 py-3 rounded-modern">
                                     Back to Menu

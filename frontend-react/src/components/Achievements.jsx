@@ -51,7 +51,7 @@ export const Achievements = ({ unlocked = [], minted = [], account }) => {
             });
 
             // 2. Mint on Contract
-            toast.loading(`Please confirm transaction (~$0.60 fee)`, { id: toastId });
+            toast.loading(`Please confirm transaction`, { id: toastId });
 
             const contract = new ethers.Contract(ACHIEVEMENT_CONTRACT_ADDRESS, achievementABI.abi || achievementABI, signer);
 
