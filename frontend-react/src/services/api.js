@@ -59,9 +59,9 @@ export const api = {
         }
     },
 
-    async fetchLeaderboard(mode, period = 'all') {
+    async fetchLeaderboard(mode, period = 'all', limit = 10, offset = 0) {
         try {
-            const response = await fetch(`${API_URL}/leaderboard/${mode}?period=${period}`);
+            const response = await fetch(`${API_URL}/leaderboard/${mode}?period=${period}&limit=${limit}&offset=${offset}`);
             if (!response.ok) {
                 console.warn(`API Error: ${response.status} ${response.statusText}`);
                 return { success: false, entries: [] };

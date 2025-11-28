@@ -8,13 +8,18 @@ export function Leaderboard() {
     const [period, setPeriod] = useState('all'); // 'all' or 'weekly'
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [page, setPage] = useState(0);
+    const [total, setTotal] = useState(0);
+    const ITEMS_PER_PAGE = 10;
 
     const fetchLeaderboard = async () => {
         if (isSearching) return; // Don't auto-refresh if searching
         try {
-            const data = await api.fetchLeaderboard('global', period);
+            const offset = page * ITEMS_PER_PAGE;
+            const data = await api.fetchLeaderboard('global', period, ITEMS_PER_PAGE, offset);
             if (data.success && Array.isArray(data.entries)) {
                 setLeaders(data.entries);
+                setTotal(data.total || 0);
             }
         } catch (err) {
             console.error("Failed to fetch leaderboard", err);
@@ -27,7 +32,12 @@ export function Leaderboard() {
         fetchLeaderboard();
         const interval = setInterval(fetchLeaderboard, 30000);
         return () => clearInterval(interval);
-    }, [period, isSearching]);
+    }, [period, isSearching, page]);
+
+    // Reset page when period changes
+    useEffect(() => {
+        setPage(0);
+    }, [period]);
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -44,11 +54,13 @@ export function Leaderboard() {
             const data = await api.fetchPlayerScores(searchQuery.trim());
             if (data.success) {
                 setLeaders(data.entries);
+                setTotal(data.entries.length);
                 if (data.entries.length === 0) {
                     toast.error("No scores found for this address");
                 }
             } else {
                 setLeaders([]);
+                setTotal(0);
                 toast.error("Failed to fetch player scores");
             }
         } catch (err) {
@@ -62,9 +74,22 @@ export function Leaderboard() {
     const clearSearch = () => {
         setSearchQuery('');
         setIsSearching(false);
+        setPage(0);
         setLoading(true);
-        // fetchLeaderboard will be triggered by useEffect dependency change or we call it manually
-        // But since isSearching changes to false, useEffect will run.
+    };
+
+    const handleNextPage = () => {
+        if ((page + 1) * ITEMS_PER_PAGE < total) {
+            setPage(p => p + 1);
+            setLoading(true);
+        }
+    };
+
+    const handlePrevPage = () => {
+        if (page > 0) {
+            setPage(p => p - 1);
+            setLoading(true);
+        }
     };
 
     const MODE_LABELS = {
@@ -157,9 +182,9 @@ export function Leaderboard() {
                             <div className="col-span-4 flex items-center gap-4">
                                 <div className={`
                                     w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0
-                                    ${!isSearching && i === 0 ? 'bg-yellow-500 text-black shadow-glow-gold' : !isSearching && i === 1 ? 'bg-slate-400 text-black' : !isSearching && i === 2 ? 'bg-orange-600 text-white' : 'bg-white/10'}
+                                    ${!isSearching && (page * ITEMS_PER_PAGE + i) === 0 ? 'bg-yellow-500 text-black shadow-glow-gold' : !isSearching && (page * ITEMS_PER_PAGE + i) === 1 ? 'bg-slate-400 text-black' : !isSearching && (page * ITEMS_PER_PAGE + i) === 2 ? 'bg-orange-600 text-white' : 'bg-white/10'}
                                 `}>
-                                    {i + 1}
+                                    {page * ITEMS_PER_PAGE + i + 1}
                                 </div>
                                 <span className="font-mono text-sm opacity-80 truncate">
                                     {entry.playerAddress ? `${entry.playerAddress.slice(0, 6)}...${entry.playerAddress.slice(-4)}` : 'Unknown'}
@@ -188,6 +213,29 @@ export function Leaderboard() {
                     )) : (
                         <div className="text-center py-8 text-text-muted">
                             {isSearching ? "No scores found for this wallet." : "No scores yet. Be the first!"}
+                        </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {!isSearching && total > ITEMS_PER_PAGE && (
+                        <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t border-white/5">
+                            <button
+                                onClick={handlePrevPage}
+                                disabled={page === 0}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-white/5 rounded-lg text-sm transition-colors"
+                            >
+                                Previous
+                            </button>
+                            <span className="text-sm text-text-muted">
+                                Page {page + 1} of {Math.ceil(total / ITEMS_PER_PAGE)}
+                            </span>
+                            <button
+                                onClick={handleNextPage}
+                                disabled={(page + 1) * ITEMS_PER_PAGE >= total}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-white/5 rounded-lg text-sm transition-colors"
+                            >
+                                Next
+                            </button>
                         </div>
                     )}
                 </div>

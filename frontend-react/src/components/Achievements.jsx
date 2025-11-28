@@ -63,6 +63,15 @@ export const Achievements = ({ unlocked = [], minted = [], account }) => {
             toast.loading("Minting in progress...", { id: toastId });
             await tx.wait();
 
+            // Play success sound
+            try {
+                const audio = new Audio('/sounds/mint-success.mp3');
+                audio.volume = 0.5;
+                await audio.play();
+            } catch (e) {
+                console.warn("Audio play failed", e);
+            }
+
             toast.success("NFT Minted Successfully!", { id: toastId });
         } catch (err) {
             console.error("Minting error:", err);

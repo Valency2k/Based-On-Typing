@@ -15,6 +15,7 @@ import { api } from './services/api';
 
 import DailyChallengePage from './pages/DailyChallengePage';
 import AIParagraphPage from './pages/AIParagraphPage';
+import { ResetModal } from './components/ResetModal';
 
 const MenuPage = () => {
   const { fee, isConnected, connectWallet, account } = useWallet();
@@ -482,12 +483,48 @@ const GamePage = () => {
 function AppLayout() {
   const { account, connectWallet, isConnected, disconnectWallet } = useWallet();
   const { quickStats } = useStats();
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetType, setResetType] = useState('daily'); // 'daily' or 'weekly'
+
+  useEffect(() => {
+    const checkTime = () => {
+      const now = new Date();
+      const utcHours = now.getUTCHours();
+      const utcMinutes = now.getUTCMinutes();
+      const today = now.toISOString().split('T')[0];
+
+      // Check if it's 00:00 UTC (allow 5 min window)
+      if (utcHours === 0 && utcMinutes < 5) {
+        const lastShown = localStorage.getItem('lastResetModalShown');
+
+        if (lastShown !== today) {
+          // Determine if it's Monday (Day 1)
+          const isMonday = now.getUTCDay() === 1;
+          setResetType(isMonday ? 'weekly' : 'daily');
+          setShowResetModal(true);
+          localStorage.setItem('lastResetModalShown', today);
+        }
+      }
+    };
+
+    // Check immediately and then every minute
+    checkTime();
+    const interval = setInterval(checkTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-text font-sans selection:bg-primary/30">
       <Toaster position="top-center" toastOptions={{
         style: { background: '#1e293b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
       }} />
+
+      {showResetModal && (
+        <ResetModal
+          type={resetType}
+          onClose={() => setShowResetModal(false)}
+        />
+      )}
 
       <Header
         account={account}
