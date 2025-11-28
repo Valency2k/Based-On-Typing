@@ -17,14 +17,14 @@ export function ResetModal({ type = 'daily', onClose }) {
                 await audio.play();
             } catch (e) {
                 console.warn("Audio autoplay blocked, waiting for interaction", e);
-                // Fallback: Play on first interaction
+                // Fallback: Play on first interaction (use capture to bypass stopPropagation)
                 const playOnInteraction = () => {
                     audio.play().catch(e => console.warn("Audio play failed on interaction", e));
-                    document.removeEventListener('click', playOnInteraction);
-                    document.removeEventListener('keydown', playOnInteraction);
+                    document.removeEventListener('click', playOnInteraction, { capture: true });
+                    document.removeEventListener('keydown', playOnInteraction, { capture: true });
                 };
-                document.addEventListener('click', playOnInteraction);
-                document.addEventListener('keydown', playOnInteraction);
+                document.addEventListener('click', playOnInteraction, { capture: true });
+                document.addEventListener('keydown', playOnInteraction, { capture: true });
             }
         };
 

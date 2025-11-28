@@ -64,12 +64,14 @@ export const Achievements = ({ unlocked = [], minted = [], account }) => {
             await tx.wait();
 
             // Play success sound
+            // Play success sound
             try {
                 const audio = new Audio('/sounds/mint-success.mp3');
-                audio.volume = 0.5;
+                audio.volume = 0.6;
                 await audio.play();
             } catch (e) {
                 console.warn("Audio play failed", e);
+                // Try playing on a user interaction if blocked (though unlikely after tx)
             }
 
             toast.success("NFT Minted Successfully!", { id: toastId });
