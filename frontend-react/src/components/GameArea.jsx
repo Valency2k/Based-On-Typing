@@ -10,7 +10,7 @@ export function GameArea({ mode, config, onComplete, onQuit }) {
     const [input, setInput] = useState('');
     const [currentWord, setCurrentWord] = useState('');
     const [wordStatus, setWordStatus] = useState('neutral');
-    const [shake, setShake] = useState(false);
+
     const [timeRemaining, setTimeRemaining] = useState(null);
     const inputRef = useRef(null);
     const { playClick, playError, playSuccess } = useSound();
@@ -76,8 +76,7 @@ export function GameArea({ mode, config, onComplete, onQuit }) {
                         playClick();
                     } else {
                         playError();
-                        setShake(true);
-                        setTimeout(() => setShake(false), 500);
+
                         toast.error('Mistake!', { id: 'mistake', duration: 1000, icon: '❌' });
                     }
 

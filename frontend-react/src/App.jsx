@@ -22,7 +22,7 @@ const MenuPage = () => {
   useEffect(() => {
     sdk.actions.ready();
   }, []);
-  const { fee, isConnected, connectWallet, account } = useWallet();
+  const { account } = useWallet();
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const [mintedAchievements, setMintedAchievements] = useState([]);
   const [practiceDisabled, setPracticeDisabled] = useState(false);
@@ -116,7 +116,7 @@ const MenuPage = () => {
 };
 
 const GamePage = () => {
-  const { mode } = useLocation().pathname.split('/').pop();
+
   const location = useLocation();
   const currentMode = location.pathname.split('/').pop();
   const navigate = useNavigate();

@@ -20,7 +20,7 @@ export default function DailyChallengePage() {
     const navigate = useNavigate();
 
     // Payment State
-    const [showPayment, setShowPayment] = useState(false);
+
     const [paymentDetails, setPaymentDetails] = useState({ gasFee: '0', total: '0' });
     const [isProcessing, setIsProcessing] = useState(false);
 

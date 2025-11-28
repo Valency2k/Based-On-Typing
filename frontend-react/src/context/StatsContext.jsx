@@ -1,49 +1,52 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const StatsContext = createContext();
 
 export function StatsProvider({ children }) {
-    const [quickStats, setQuickStats] = useState({
-        wpm: 0,
-        accuracy: 0,
-        streak: 0,
-        totalGames: 0
-    });
+    const [quickStats, setQuickStats] = useState(() => {
+        try {
+            const saved = localStorage.getItem('quickStats');
+            const savedDate = localStorage.getItem('statsDate');
+            const now = new Date();
+            const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString().split('T')[0];
 
-    useEffect(() => {
-        const saved = localStorage.getItem('quickStats');
-        const savedDate = localStorage.getItem('statsDate');
-        const now = new Date();
-        const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString().split('T')[0];
+            if (saved) {
+                let parsed = JSON.parse(saved);
 
-        if (saved) {
-            let parsed = JSON.parse(saved);
+                // Daily Reset for WPM and Accuracy
+                if (savedDate !== todayUTC) {
+                    parsed.wpm = 0;
+                    parsed.accuracy = 0;
+                    localStorage.setItem('statsDate', todayUTC);
+                }
 
-            // Daily Reset for WPM and Accuracy
-            if (savedDate !== todayUTC) {
-                parsed.wpm = 0;
-                parsed.accuracy = 0;
-                localStorage.setItem('statsDate', todayUTC);
-                // We don't save parsed back yet, we wait to see if streak needs update or just set it here
+                // Validate streak on load
+                const yesterday = new Date(now);
+                yesterday.setUTCDate(now.getUTCDate() - 1);
+                const yesterdayUTC = new Date(Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate())).toISOString().split('T')[0];
+
+                const lastPlayed = localStorage.getItem('lastStreakDate');
+
+                // If last played was before yesterday, streak is broken
+                if (lastPlayed && lastPlayed < yesterdayUTC) {
+                    parsed.streak = 0;
+                }
+
+                // Save any changes
+                localStorage.setItem('quickStats', JSON.stringify(parsed));
+                return parsed;
             }
-
-            // Validate streak on load
-            const yesterday = new Date(now);
-            yesterday.setUTCDate(now.getUTCDate() - 1);
-            const yesterdayUTC = new Date(Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate())).toISOString().split('T')[0];
-
-            const lastPlayed = localStorage.getItem('lastStreakDate');
-
-            // If last played was before yesterday, streak is broken
-            if (lastPlayed && lastPlayed < yesterdayUTC) {
-                parsed.streak = 0;
-            }
-
-            // Save any changes (reset WPM/Acc or broken streak)
-            localStorage.setItem('quickStats', JSON.stringify(parsed));
-            setQuickStats(parsed);
+        } catch (e) {
+            console.error("Failed to load stats:", e);
         }
-    }, []);
+
+        return {
+            wpm: 0,
+            accuracy: 0,
+            streak: 0,
+            totalGames: 0
+        };
+    });
 
     const updateStats = (newGameStats) => {
         setQuickStats(prev => {
@@ -108,6 +111,7 @@ export function StatsProvider({ children }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useStats() {
     return useContext(StatsContext);
 }

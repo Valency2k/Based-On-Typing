@@ -7,7 +7,7 @@ const WalletContext = createContext();
 
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x3D3Ad08e745B961480f919eCc23b53D34912E3d4';
 
-export function walletClientToSigner(walletClient) {
+function walletClientToSigner(walletClient) {
     const { account, chain, transport } = walletClient;
     const network = {
         chainId: chain.id,
@@ -19,7 +19,7 @@ export function walletClientToSigner(walletClient) {
     return signer;
 }
 
-export function publicClientToProvider(publicClient) {
+function publicClientToProvider(publicClient) {
     const { chain, transport } = publicClient;
     const network = {
         chainId: chain.id,
@@ -42,10 +42,9 @@ export function WalletProvider({ children }) {
     const { data: walletClient } = useWalletClient();
     const publicClient = usePublicClient();
 
-    const [contract, setContract] = useState(null);
     const [fee, setFee] = useState('0.000067');
     const [feeWeiState, setFeeWeiState] = useState(null);
-    const [error, setError] = useState(null);
+
 
     // Derive Ethers Provider and Signer from Wagmi Clients
     const provider = useMemo(() => {
@@ -57,26 +56,26 @@ export function WalletProvider({ children }) {
     }, [walletClient]);
 
     // Initialize Contract
-    useEffect(() => {
-        if (signer && CONTRACT_ADDRESS) {
-            try {
-                const abi = Array.isArray(contractABI) ? contractABI : contractABI.abi;
-                const _contract = new ethers.Contract(CONTRACT_ADDRESS, abi, signer);
-                setContract(_contract);
-
-                // Fetch fee
-                _contract.calculateGameFee().then(feeWei => {
-                    setFeeWeiState(feeWei);
-                    setFee(ethers.utils.formatEther(feeWei));
-                }).catch(e => console.warn("Could not fetch fee:", e));
-
-            } catch (err) {
-                console.error("Contract init failed:", err);
-            }
-        } else {
-            setContract(null);
+    const contract = useMemo(() => {
+        if (!signer || !CONTRACT_ADDRESS) return null;
+        try {
+            const abi = Array.isArray(contractABI) ? contractABI : contractABI.abi;
+            return new ethers.Contract(CONTRACT_ADDRESS, abi, signer);
+        } catch (err) {
+            console.error("Contract init failed:", err);
+            return null;
         }
     }, [signer]);
+
+    // Fetch Fee
+    useEffect(() => {
+        if (contract) {
+            contract.calculateGameFee().then(feeWei => {
+                setFeeWeiState(feeWei);
+                setFee(ethers.utils.formatEther(feeWei));
+            }).catch(e => console.warn("Could not fetch fee:", e));
+        }
+    }, [contract]);
 
     const connectWallet = async () => {
         // For Farcaster Miniapps, connection is usually automatic via the connector.
@@ -100,7 +99,7 @@ export function WalletProvider({ children }) {
             signer,
             contract,
             chainId,
-            error,
+
             fee,
             feeWei: feeWeiState,
             connectWallet,
@@ -113,4 +112,5 @@ export function WalletProvider({ children }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useWallet = () => useContext(WalletContext);
