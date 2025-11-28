@@ -30,7 +30,8 @@ const {
     getStatus,
     onProviderConnected,
     onProviderDisconnected,
-    signGameResult
+    signGameResult,
+    isConnected
 } = require('./blockchain');
 
 const leaderboard = require('./leaderboard');
@@ -51,6 +52,10 @@ onProviderDisconnected(() => {
 });
 
 // ... (MongoDB Connection code) ...
+
+const app = express();
+app.use(cors());
+app.use(express.json());
 
 // Add Sync Endpoint
 app.get('/api/sync', async (req, res) => {
@@ -107,7 +112,6 @@ async function ensureInitialized() {
     if (isInitializing) return;
 
     // If everything is already connected, skip
-    const { isConnected } = require('./blockchain');
     const blockchainConnected = isConnected();
     const dbConnected = dbStatus === "Connected";
 
@@ -126,8 +130,15 @@ async function ensureInitialized() {
 
         // 2. Initialize Blockchain (if not connected)
         if (!blockchainConnected) {
-            await initBlockchain();
+            try {
+                await initBlockchain();
+            } catch (bcErr) {
+                console.error("⚠️ Blockchain initialization failed:", bcErr.message);
+                // Don't throw, just log. We can retry next time.
+            }
         }
+    } catch (err) {
+        console.error("❌ Initialization error:", err);
     } finally {
         isInitializing = false;
     }
@@ -135,17 +146,19 @@ async function ensureInitialized() {
     console.log(`✅ Backend Initialization attempt complete. DB: ${dbStatus}, Blockchain: ${isConnected() ? 'Connected' : 'Disconnected'}`);
 }
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
 app.use(async (req, res, next) => {
     // Skip init for health/ping checks to avoid blocking them if DB is down
     if (req.path === '/api/health' || req.path === '/api/ping') {
         return next();
     }
 
-    await ensureInitialized();
+    try {
+        await ensureInitialized();
+    } catch (err) {
+        console.error("❌ Middleware Initialization Error:", err);
+        // Continue anyway, don't crash the request. 
+        // Individual endpoints will handle missing DB/Blockchain.
+    }
     next();
 });
 
@@ -155,7 +168,6 @@ app.get('/api/status', async (req, res) => {
     res.json({
         status: 'online',
         db: dbStatus,
-        blockchain: await getStatus(),
         blockchain: await getStatus(),
         initialized: true // Always true effectively as we retry on demand
     });
