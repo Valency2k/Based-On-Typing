@@ -46,14 +46,16 @@ export function ResetModal({ type = 'daily', onClose }) {
                 angle: 60,
                 spread: 55,
                 origin: { x: 0 },
-                colors: ['#FFD700', '#FFA500', '#FFFFFF']
+                colors: ['#FFD700', '#FFA500', '#FFFFFF'],
+                zIndex: 2000
             });
             confetti({
                 particleCount: 2,
                 angle: 120,
                 spread: 55,
                 origin: { x: 1 },
-                colors: ['#FFD700', '#FFA500', '#FFFFFF']
+                colors: ['#FFD700', '#FFA500', '#FFFFFF'],
+                zIndex: 2000
             });
 
             if (Date.now() < end) {
