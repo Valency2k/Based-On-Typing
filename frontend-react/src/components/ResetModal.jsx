@@ -1,17 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Confetti from 'react-confetti';
+import confetti from 'canvas-confetti';
 import { api } from '../services/api';
 
 export function ResetModal({ type = 'daily', onClose }) {
     const [leaders, setLeaders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
     useEffect(() => {
-        const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-        window.addEventListener('resize', handleResize);
-
         // Play fanfare sound
         try {
             const audio = new Audio('/sounds/reset-fanfare.mp3');
@@ -20,6 +16,32 @@ export function ResetModal({ type = 'daily', onClose }) {
         } catch (e) {
             console.warn("Audio play failed", e);
         }
+
+        // Trigger confetti
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        const frame = () => {
+            confetti({
+                particleCount: 2,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: ['#FFD700', '#FFA500', '#FFFFFF']
+            });
+            confetti({
+                particleCount: 2,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: ['#FFD700', '#FFA500', '#FFFFFF']
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        };
+        frame();
 
         const fetchData = async () => {
             try {
@@ -48,8 +70,6 @@ export function ResetModal({ type = 'daily', onClose }) {
         };
 
         fetchData();
-
-        return () => window.removeEventListener('resize', handleResize);
     }, [type]);
 
     return (
@@ -61,7 +81,7 @@ export function ResetModal({ type = 'daily', onClose }) {
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
                 onClick={onClose}
             >
-                <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={500} />
+                {/* Confetti is handled by canvas-confetti overlay */}
 
                 <motion.div
                     initial={{ scale: 0.5, y: 100 }}
@@ -100,9 +120,9 @@ export function ResetModal({ type = 'daily', onClose }) {
                                     animate={{ x: 0, opacity: 1 }}
                                     transition={{ delay: i * 0.1 }}
                                     className={`flex items-center justify-between p-4 rounded-lg border ${i === 0 ? 'bg-gold/20 border-gold/50' :
-                                            i === 1 ? 'bg-slate-400/20 border-slate-400/50' :
-                                                i === 2 ? 'bg-orange-700/20 border-orange-700/50' :
-                                                    'bg-white/5 border-white/5'
+                                        i === 1 ? 'bg-slate-400/20 border-slate-400/50' :
+                                            i === 2 ? 'bg-orange-700/20 border-orange-700/50' :
+                                                'bg-white/5 border-white/5'
                                         }`}
                                 >
                                     <div className="flex items-center gap-4">
