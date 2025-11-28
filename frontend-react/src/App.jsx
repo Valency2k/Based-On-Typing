@@ -16,8 +16,12 @@ import { api } from './services/api';
 import DailyChallengePage from './pages/DailyChallengePage';
 import AIParagraphPage from './pages/AIParagraphPage';
 import { ResetModal } from './components/ResetModal';
+import sdk from '@farcaster/miniapp-sdk';
 
 const MenuPage = () => {
+  useEffect(() => {
+    sdk.actions.ready();
+  }, []);
   const { fee, isConnected, connectWallet, account } = useWallet();
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const [mintedAchievements, setMintedAchievements] = useState([]);
