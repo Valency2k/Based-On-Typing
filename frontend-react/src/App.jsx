@@ -483,8 +483,7 @@ const GamePage = () => {
 function AppLayout() {
   const { account, connectWallet, isConnected, disconnectWallet } = useWallet();
   const { quickStats } = useStats();
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [resetType, setResetType] = useState('daily'); // 'daily' or 'weekly'
+  const [resetQueue, setResetQueue] = useState([]);
 
   useEffect(() => {
     const checkTime = () => {
@@ -495,13 +494,13 @@ function AppLayout() {
       if (lastShown !== today) {
         // Determine if it's Monday (Day 1)
         const isMonday = now.getUTCDay() === 1;
-        setResetType(isMonday ? 'weekly' : 'daily');
-        setShowResetModal(true);
+        // On Mondays, show Daily first, then Weekly. On other days, just Daily.
+        setResetQueue(isMonday ? ['daily', 'weekly'] : ['daily']);
         localStorage.setItem('lastResetModalShown', today);
       }
     };
 
-    // Check immediately on mount, and then every minute (in case date changes while playing)
+    // Check immediately on mount, and then every minute
     checkTime();
     const interval = setInterval(checkTime, 60000);
     return () => clearInterval(interval);
@@ -513,10 +512,10 @@ function AppLayout() {
         style: { background: '#1e293b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
       }} />
 
-      {showResetModal && (
+      {resetQueue.length > 0 && (
         <ResetModal
-          type={resetType}
-          onClose={() => setShowResetModal(false)}
+          type={resetQueue[0]}
+          onClose={() => setResetQueue(prev => prev.slice(1))}
         />
       )}
 
