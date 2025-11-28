@@ -9,13 +9,26 @@ export function ResetModal({ type = 'daily', onClose }) {
 
     useEffect(() => {
         // Play fanfare sound
-        try {
-            const audio = new Audio('/sounds/reset-fanfare.mp3');
-            audio.volume = 0.6;
-            audio.play();
-        } catch (e) {
-            console.warn("Audio play failed", e);
-        }
+        const audio = new Audio('/sounds/reset-fanfare.mp3');
+        audio.volume = 0.6;
+
+        const playSound = async () => {
+            try {
+                await audio.play();
+            } catch (e) {
+                console.warn("Audio autoplay blocked, waiting for interaction", e);
+                // Fallback: Play on first interaction
+                const playOnInteraction = () => {
+                    audio.play().catch(e => console.warn("Audio play failed on interaction", e));
+                    document.removeEventListener('click', playOnInteraction);
+                    document.removeEventListener('keydown', playOnInteraction);
+                };
+                document.addEventListener('click', playOnInteraction);
+                document.addEventListener('keydown', playOnInteraction);
+            }
+        };
+
+        playSound();
 
         // Trigger confetti
         const duration = 3000;

@@ -19,9 +19,7 @@ import { ResetModal } from './components/ResetModal';
 import sdk from '@farcaster/miniapp-sdk';
 
 const MenuPage = () => {
-  useEffect(() => {
-    sdk.actions.ready();
-  }, []);
+
   const { account } = useWallet();
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const [mintedAchievements, setMintedAchievements] = useState([]);
@@ -507,6 +505,10 @@ function AppLayout() {
     // Check immediately on mount, and then every minute
     checkTime();
     const interval = setInterval(checkTime, 60000);
+
+    // Notify Farcaster that the app is ready
+    sdk.actions.ready();
+
     return () => clearInterval(interval);
   }, []);
 
