@@ -30,6 +30,12 @@ export function ResetModal({ type = 'daily', onClose }) {
 
         playSound();
 
+        // Cleanup function to stop audio when modal closes (unmounts)
+        return () => {
+            audio.pause();
+            audio.currentTime = 0;
+        };
+
         // Trigger confetti
         const duration = 3000;
         const end = Date.now() + duration;
