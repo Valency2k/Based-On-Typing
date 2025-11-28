@@ -489,25 +489,19 @@ function AppLayout() {
   useEffect(() => {
     const checkTime = () => {
       const now = new Date();
-      const utcHours = now.getUTCHours();
-      const utcMinutes = now.getUTCMinutes();
       const today = now.toISOString().split('T')[0];
+      const lastShown = localStorage.getItem('lastResetModalShown');
 
-      // Check if it's 00:00 UTC (allow 5 min window)
-      if (utcHours === 0 && utcMinutes < 5) {
-        const lastShown = localStorage.getItem('lastResetModalShown');
-
-        if (lastShown !== today) {
-          // Determine if it's Monday (Day 1)
-          const isMonday = now.getUTCDay() === 1;
-          setResetType(isMonday ? 'weekly' : 'daily');
-          setShowResetModal(true);
-          localStorage.setItem('lastResetModalShown', today);
-        }
+      if (lastShown !== today) {
+        // Determine if it's Monday (Day 1)
+        const isMonday = now.getUTCDay() === 1;
+        setResetType(isMonday ? 'weekly' : 'daily');
+        setShowResetModal(true);
+        localStorage.setItem('lastResetModalShown', today);
       }
     };
 
-    // Check immediately and then every minute
+    // Check immediately on mount, and then every minute (in case date changes while playing)
     checkTime();
     const interval = setInterval(checkTime, 60000);
     return () => clearInterval(interval);
