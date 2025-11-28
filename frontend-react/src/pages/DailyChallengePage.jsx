@@ -175,6 +175,7 @@ export default function DailyChallengePage() {
                     stats.correctWords,
                     stats.mistakes,
                     stats.correctCharacters,
+                    stats.wpm,
                     signature
                 );
                 await tx.wait();
@@ -211,7 +212,8 @@ export default function DailyChallengePage() {
     if (gameState === 'intro') {
         const today = new Date().toISOString().split('T')[0];
         const lastPlayed = localStorage.getItem('lastDailyChallengePlayed');
-        const hasPlayed = lastPlayed === today;
+        // const hasPlayed = lastPlayed === today; // DISABLED FOR TESTING
+        const hasPlayed = false;
 
         return (
             <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
