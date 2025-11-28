@@ -155,19 +155,15 @@ export default function DailyChallengePage() {
         if (contract && sessionId) {
             try {
                 // 1. Get signature from backend
-                const signResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/game/sign`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        player: account,
-                        sessionId: sessionId.toString(),
-                        wordsTyped: stats.wordsTyped,
-                        correctWords: stats.correctWords,
-                        mistakes: stats.mistakes,
-                        correctCharacters: stats.correctCharacters
-                    })
+                const signData = await api.signGame({
+                    player: account,
+                    sessionId: sessionId.toString(),
+                    wordsTyped: stats.wordsTyped,
+                    correctWords: stats.correctWords,
+                    mistakes: stats.mistakes,
+                    correctCharacters: stats.correctCharacters
                 });
-                const signData = await signResponse.json();
+
                 if (!signData.success) throw new Error(signData.error || "Signing failed");
 
                 const signature = signData.signature;

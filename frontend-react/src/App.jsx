@@ -302,27 +302,16 @@ const GamePage = () => {
         console.log("Submitting score for Session:", sessionId.toString());
         // 1. Get signature from backend
         // 1. Get signature from backend
-        const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:3001/api');
-        const signResponse = await fetch(`${apiBase}/game/sign`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            player: account,
-            sessionId: sessionId.toString(),
-            wordsTyped: stats.wordsTyped,
-            correctWords: stats.correctWords,
-            mistakes: stats.mistakes,
-            correctCharacters: stats.correctCharacters,
-            wpm: stats.wpm
-          })
+        const signData = await api.signGame({
+          player: account,
+          sessionId: sessionId.toString(),
+          wordsTyped: stats.wordsTyped,
+          correctWords: stats.correctWords,
+          mistakes: stats.mistakes,
+          correctCharacters: stats.correctCharacters,
+          wpm: stats.wpm
         });
 
-        if (!signResponse.ok) {
-          const text = await signResponse.text();
-          throw new Error(`Backend error (${signResponse.status}): ${text.slice(0, 100)}`);
-        }
-
-        const signData = await signResponse.json();
         if (!signData.success) throw new Error(signData.error || "Signing failed");
 
         const signature = signData.signature;

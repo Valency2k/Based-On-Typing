@@ -121,5 +121,23 @@ export const api = {
             console.error("API Connection Error (Minting):", error);
             return { success: false, error: error.message };
         }
+    },
+
+    async signGame(data) {
+        try {
+            const response = await fetch(`${API_URL}/game/sign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Signing failed');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error("API Connection Error (Signing):", error);
+            return { success: false, error: error.message };
+        }
     }
 };
