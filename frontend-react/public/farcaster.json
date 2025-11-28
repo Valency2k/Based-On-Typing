@@ -12,16 +12,21 @@
         "subtitle": "Type Fast. Stay Based.",
         "description": "\"Dive into exciting typing battles on Base! Lock in your score on-chain and compete your way to the top of the leaderboard.\"",
         "primaryCategory": "games",
-        "ogDescription": "The ultimate competitive typing game on Base. Real-time leaderboards and on-chain achievements.",
-        "castShareUrl": "https://based-on-typing.vercel.app",
-        "ogTitle": "Prove Your WPM on Base",
-        "tagline": "Type Fast. Stay Based.",
         "tags": [
             "gaming",
             "typing",
             "speedtest",
             "base",
             "onchain"
-        ]
+        ],
+        "tagline": "Type Fast. Stay Based.",
+        "ogTitle": "Prove Your WPM on Base",
+        "ogDescription": "The ultimate competitive typing game on Base. Real-time leaderboards and on-chain achievements.",
+        "castShareUrl": "https://based-on-typing.vercel.app"
+    },
+    "accountAssociation": {
+        "header": "eyJmaWQiOjE0NTU2MTIsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhiNjJhNzcxMTk2N2E3M2VFRTA3NzFlMUU1NTZkZjk1Mzc0RjliN2I1In0",
+        "payload": "eyJkb21haW4iOiJiYXNlZC1vbi10eXBpbmcudmVyY2VsLmFwcCJ9",
+        "signature": "U8cKNHYRkhwRFErcxYOoAFNKBEWqkLJkzvfrQFF1fgw6Cm4yNfo+Gpa7f58J9sDjIiE4feUfnyLGBXvhCj6rPBs="
     }
 }
