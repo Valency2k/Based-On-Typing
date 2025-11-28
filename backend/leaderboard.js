@@ -231,7 +231,7 @@ async function getGlobalHandler(req, res) {
             { $sort: { score: -1, wpm: -1 } },
             {
                 $group: {
-                    _id: "$playerAddress",
+                    _id: { player: "$playerAddress", mode: "$mode" },
                     doc: { $first: "$$ROOT" }
                 }
             },
