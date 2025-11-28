@@ -509,7 +509,33 @@ function AppLayout() {
     // Notify Farcaster that the app is ready
     sdk.actions.ready();
 
-    return () => clearInterval(interval);
+    // Global Audio Unlock
+    const unlockAudio = () => {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+        // Resume context if suspended (common in some browsers)
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+      }
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
   }, []);
 
   return (
