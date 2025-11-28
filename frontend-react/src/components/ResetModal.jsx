@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { api } from '../services/api';
@@ -6,6 +6,7 @@ import { api } from '../services/api';
 export function ResetModal({ type = 'daily', onClose }) {
     const [leaders, setLeaders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const canvasRef = useRef(null);
 
     useEffect(() => {
         // Play fanfare sound
@@ -35,27 +36,34 @@ export function ResetModal({ type = 'daily', onClose }) {
             audio.pause();
             audio.currentTime = 0;
         };
+    }, []);
+
+    useEffect(() => {
+        if (!canvasRef.current) return;
+
+        const myConfetti = confetti.create(canvasRef.current, {
+            resize: true,
+            useWorker: true
+        });
 
         // Trigger confetti
         const duration = 3000;
         const end = Date.now() + duration;
 
         const frame = () => {
-            confetti({
+            myConfetti({
                 particleCount: 2,
                 angle: 60,
                 spread: 55,
                 origin: { x: 0 },
-                colors: ['#FFD700', '#FFA500', '#FFFFFF'],
-                zIndex: 2000
+                colors: ['#FFD700', '#FFA500', '#FFFFFF']
             });
-            confetti({
+            myConfetti({
                 particleCount: 2,
                 angle: 120,
                 spread: 55,
                 origin: { x: 1 },
-                colors: ['#FFD700', '#FFA500', '#FFFFFF'],
-                zIndex: 2000
+                colors: ['#FFD700', '#FFA500', '#FFFFFF']
             });
 
             if (Date.now() < end) {
@@ -64,6 +72,16 @@ export function ResetModal({ type = 'daily', onClose }) {
         };
         frame();
 
+        return () => {
+            try {
+                myConfetti.reset();
+            } catch (e) {
+                console.error("Error resetting confetti", e);
+            }
+        };
+    }, []); // Run once on mount
+
+    useEffect(() => {
         const fetchData = async () => {
             try {
                 // Fetch top 10 for the specific mode/period
@@ -102,12 +120,16 @@ export function ResetModal({ type = 'daily', onClose }) {
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
                 onClick={onClose}
             >
-                {/* Confetti is handled by canvas-confetti overlay */}
+                {/* Dedicated Confetti Canvas - Z-Index higher than modal background but check modal content */}
+                <canvas
+                    ref={canvasRef}
+                    className="fixed inset-0 w-full h-full pointer-events-none z-[60]"
+                />
 
                 <motion.div
                     initial={{ scale: 0.5, y: 100 }}
                     animate={{ scale: 1, y: 0 }}
-                    className="bg-surface border border-gold/30 rounded-modern-lg p-8 max-w-2xl w-full shadow-glow-gold relative overflow-hidden"
+                    className="bg-surface border border-gold/30 rounded-modern-lg p-8 max-w-2xl w-full shadow-glow-gold relative overflow-hidden z-[70]"
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Background Effects */}
